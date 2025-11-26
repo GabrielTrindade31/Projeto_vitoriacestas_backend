@@ -22,7 +22,18 @@ function createApp({ itemRouter, supplierRouter, authRouter } = {}) {
   app.use('/api/suppliers', supplierRouter || buildSupplierRouter());
   app.use('/api/auth', authRouter || buildAuthRouter());
 
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  app.get('/docs/swagger.json', (_, res) => {
+    res.type('application/json').send(swaggerDocument);
+  });
+
+  app.use(
+    '/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDocument, {
+      explorer: true,
+      swaggerOptions: { url: '/docs/swagger.json' },
+    })
+  );
 
   app.get('/health', (_, res) => res.json({ status: 'ok' }));
 

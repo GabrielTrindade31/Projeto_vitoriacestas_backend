@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { findByEmail, findById } = require('../repositories/userRepository');
 const tokenStore = require('./tokenStore');
