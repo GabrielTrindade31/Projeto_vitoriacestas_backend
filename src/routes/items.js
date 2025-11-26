@@ -1,11 +1,12 @@
 const express = require('express');
 const { createItemService } = require('../services/itemService');
 const repository = require('../repositories/itemRepository');
+const { authenticate, authorizeRoles } = require('../middlewares/authentication');
 
-function buildRouter(service = createItemService(repository)) {
+function buildRouter(service = createItemService(repository), auth = { authenticate, authorizeRoles }) {
   const router = express.Router();
 
-  router.post('/', async (req, res) => {
+  router.post('/', auth.authenticate, auth.authorizeRoles(['Admin', 'Gestor']), async (req, res) => {
     try {
       const created = await service.createItem(req.body);
       return res.status(201).json({ message: 'Item cadastrado com sucesso', item: created });

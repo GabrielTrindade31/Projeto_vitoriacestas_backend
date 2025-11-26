@@ -7,6 +7,7 @@ const YAML = require('yamljs');
 const buildItemRouter = require('./routes/items');
 const buildSupplierRouter = require('./routes/suppliers');
 const buildAuthRouter = require('./routes/auth');
+const { rateLimit } = require('./middlewares/authentication');
 
 function createApp({ itemRouter, supplierRouter, authRouter } = {}) {
   const app = express();
@@ -14,6 +15,7 @@ function createApp({ itemRouter, supplierRouter, authRouter } = {}) {
 
   app.use(cors());
   app.use(express.json());
+  app.use(rateLimit());
   app.use(express.static(path.join(__dirname, '..', 'public')));
 
   app.use('/api/items', itemRouter || buildItemRouter());

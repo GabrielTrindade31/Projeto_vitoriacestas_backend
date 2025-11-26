@@ -7,7 +7,11 @@ function buildMockItemRouter() {
   const service = {
     createItem: jest.fn(async (payload) => ({ id: 1, ...payload })),
   };
-  return { router: buildItemRouter(service), service };
+  const auth = {
+    authenticate: (req, res, next) => next(),
+    authorizeRoles: () => (req, res, next) => next(),
+  };
+  return { router: buildItemRouter(service, auth), service };
 }
 
 describe('POST /api/items', () => {
