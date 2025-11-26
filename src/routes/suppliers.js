@@ -1,11 +1,12 @@
 const express = require('express');
 const { createSupplierService } = require('../services/supplierService');
 const repository = require('../repositories/supplierRepository');
+const { authenticate, authorizeRoles } = require('../middlewares/authentication');
 
-function buildRouter(service = createSupplierService(repository)) {
+function buildRouter(service = createSupplierService(repository), auth = { authenticate, authorizeRoles }) {
   const router = express.Router();
 
-  router.post('/', async (req, res) => {
+  router.post('/', auth.authenticate, auth.authorizeRoles(['Admin']), async (req, res) => {
     try {
       const created = await service.createSupplier(req.body);
       return res.status(201).json({ message: 'Fornecedor cadastrado com sucesso', supplier: created });
