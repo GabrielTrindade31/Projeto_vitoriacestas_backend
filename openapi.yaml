@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: API Estoque Vitória Cestas
-  version: 1.0.0
-  description: Endpoints para gestão de itens, fornecedores e autenticação admin.
+  version: 1.1.0
+  description: Endpoints para gestão de itens, fornecedores e autenticação com controle de perfis.
 servers:
   - url: https://{host}
     variables:
@@ -12,8 +12,9 @@ servers:
 paths:
   /api/auth/login:
     post:
-      summary: Login administrador
+      summary: Login com perfis
       tags: [Autenticação]
+      description: Autentica usuário (Admin, Gestor ou Operador) e retorna tokens de acesso e refresh.
       requestBody:
         required: true
         content:
@@ -29,20 +30,73 @@ paths:
                   type: string
       responses:
         '200':
-          description: Token JWT
+          description: Tokens gerados com sucesso
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  token:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      name:
+                        type: string
+                  accessToken:
                     type: string
+                  refreshToken:
+                    type: string
+                  expiresIn:
+                    type: string
+        '400':
+          description: Requisição inválida
         '401':
           description: Credenciais inválidas
+  /api/auth/refresh:
+    post:
+      summary: Renovação de tokens
+      tags: [Autenticação]
+      description: Gera um novo par de tokens a partir de um refresh token válido.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Tokens renovados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  expiresIn:
+                    type: string
+        '400':
+          description: Requisição inválida
+        '401':
+          description: Refresh token inválido
   /api/items:
     post:
       summary: Cadastra novo item
       tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para perfis Admin e Gestor.
       requestBody:
         required: true
         content:
@@ -58,12 +112,19 @@ paths:
                 $ref: '#/components/schemas/ItemResponse'
         '400':
           description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
         '409':
           description: Código duplicado
   /api/suppliers:
     post:
       summary: Cadastra fornecedor
       tags: [Fornecedores]
+      security:
+        - bearerAuth: []
+      description: Disponível apenas para perfil Admin.
       requestBody:
         required: true
         content:
@@ -79,9 +140,18 @@ paths:
                 $ref: '#/components/schemas/FornecedorResponse'
         '400':
           description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
         '409':
           description: CNPJ duplicado
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     ItemInput:
       type: object
