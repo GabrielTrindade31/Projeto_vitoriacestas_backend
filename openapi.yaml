@@ -28,6 +28,22 @@ paths:
                   format: email
                 password:
                   type: string
+            examples:
+              admin:
+                summary: Administrador padrão (memória)
+                value:
+                  email: admin@vitoriacestas.com
+                  password: admin123
+              gestor:
+                summary: Gestor padrão (memória)
+                value:
+                  email: gestor@vitoriacestas.com
+                  password: gestor123
+              operador:
+                summary: Operador padrão (memória)
+                value:
+                  email: operador@vitoriacestas.com
+                  password: operador123
       responses:
         '200':
           description: Tokens gerados com sucesso
