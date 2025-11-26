@@ -5,6 +5,11 @@ async function findByCnpj(cnpj) {
   return rows[0];
 }
 
+async function findAll() {
+  const { rows } = await pool.query('SELECT * FROM fornecedor ORDER BY id DESC');
+  return rows;
+}
+
 async function create(supplier) {
   const query = `INSERT INTO fornecedor (cnpj, razao_social, contato, email, telefone, endereco_id)
     VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`;
@@ -22,5 +27,6 @@ async function create(supplier) {
 
 module.exports = {
   findByCnpj,
+  findAll,
   create,
 };

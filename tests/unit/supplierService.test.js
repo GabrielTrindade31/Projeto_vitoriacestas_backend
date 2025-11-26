@@ -36,9 +36,23 @@ describe('createSupplierService', () => {
     const repository = {
       findByCnpj: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockResolvedValue({ id: 10, ...basePayload }),
+      findAll: jest.fn(),
     };
     const service = createSupplierService(repository);
     const result = await service.createSupplier(basePayload);
     expect(result.id).toBe(10);
+  });
+
+  it('lista fornecedores cadastrados', async () => {
+    const repository = {
+      findByCnpj: jest.fn(),
+      create: jest.fn(),
+      findAll: jest.fn().mockResolvedValue([{ id: 5, razao_social: 'Fornecedor XPTO' }]),
+    };
+    const service = createSupplierService(repository);
+    const result = await service.listSuppliers();
+
+    expect(result[0].id).toBe(5);
+    expect(repository.findAll).toHaveBeenCalled();
   });
 });

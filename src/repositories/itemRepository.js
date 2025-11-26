@@ -5,6 +5,11 @@ async function findByCode(code) {
   return rows[0];
 }
 
+async function findAll() {
+  const { rows } = await pool.query('SELECT * FROM produto ORDER BY id DESC');
+  return rows;
+}
+
 async function create(item) {
   const query = `INSERT INTO produto (codigo, nome, descricao, categoria, quantidade, preco, fornecedor_id)
     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`;
@@ -23,5 +28,6 @@ async function create(item) {
 
 module.exports = {
   findByCode,
+  findAll,
   create,
 };
