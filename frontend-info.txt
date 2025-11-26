@@ -1,0 +1,28 @@
+Rotas principais
+- POST /api/auth/login -> autentica administrador e retorna JWT (Authorization: Bearer <token>)
+- POST /api/items -> cria item com corpo { codigo, nome, descricao?, categoria?, quantidade, preco, fornecedorId? }
+- POST /api/suppliers -> cria fornecedor com corpo { cnpj, razaoSocial, contato, email, telefone, enderecoId? }
+- GET /docs -> interface Swagger para testes rápidos
+- GET /health -> verificação de status
+
+Regras de validação para formulários web
+- Item: codigo, nome, quantidade e preco obrigatórios; quantidade >= 0; preço >= 0; código único.
+- Fornecedor: cnpj válido e único; razaoSocial, contato, email e telefone obrigatórios; email em formato válido; telefone aceita máscara brasileira.
+
+Fluxo sugerido de consumo no frontend
+1) Autenticar admin e salvar JWT em localStorage.
+2) Usar o token em requisições protegidas futuras (endpoints adicionais podem validar o header Authorization).
+3) Mostrar mensagens de sucesso/erro com base no JSON de resposta (campo message).
+
+Headers padrão
+- Content-Type: application/json
+- Authorization: Bearer <jwt> (quando necessário)
+
+Banco de dados
+- String de conexão via variável de ambiente DATABASE_URL (Postgres).
+- Tabelas modeladas em db/schema.sql seguindo o diagrama compartilhado.
+
+Como testar localmente
+- Instalar dependências (npm install) e rodar npm start.
+- Acessar http://localhost:3000/ para abrir o formulário de cadastro de itens.
+- Acessar http://localhost:3000/docs para ver e testar os endpoints.
