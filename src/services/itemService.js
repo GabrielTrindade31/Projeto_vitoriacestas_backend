@@ -35,7 +35,11 @@ function createItemService(repository) {
     return created;
   }
 
-  return { createItem };
+  async function listItems() {
+    return repository.findAll();
+  }
+
+  return { createItem, listItems };
 }
 
 module.exports = { createItemService };

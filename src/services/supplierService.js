@@ -40,7 +40,11 @@ function createSupplierService(repository) {
     return repository.create(value);
   }
 
-  return { createSupplier };
+  async function listSuppliers() {
+    return repository.findAll();
+  }
+
+  return { createSupplier, listSuppliers };
 }
 
 module.exports = { createSupplierService };
