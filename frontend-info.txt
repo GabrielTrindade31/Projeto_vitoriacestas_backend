@@ -2,7 +2,7 @@ Rotas principais
 - POST /api/auth/login -> autentica administrador e retorna JWT (Authorization: Bearer <token>)
 - POST /api/items -> cria item com corpo { codigo, nome, descricao?, categoria?, quantidade, preco, fornecedorId? }
 - POST /api/suppliers -> cria fornecedor com corpo { cnpj, razaoSocial, contato, email, telefone, enderecoId? }
-- GET /docs -> interface Swagger para testes rápidos
+- GET /docs -> interface Swagger para testes rápidos (em produção: https://projeto-vitoriacestas-backend.vercel.app/docs)
 - GET /health -> verificação de status
 
 Regras de validação para formulários web
@@ -12,7 +12,7 @@ Regras de validação para formulários web
 Fluxo sugerido de consumo no frontend
 1) Autenticar admin e salvar JWT em localStorage.
 2) Usar o token em requisições protegidas futuras (endpoints adicionais podem validar o header Authorization).
-3) Mostrar mensagens de sucesso/erro com base no JSON de resposta (campo message).
+3) Mostrar mensagens de sucesso/erro com base no JSON de resposta (campo message). Em produção, sempre use URLs relativas ao host do backend (`https://projeto-vitoriacestas-backend.vercel.app`) para evitar respostas HTML (ex.: "The page could not be found") que quebram o `JSON.parse`.
 
 Headers padrão
 - Content-Type: application/json

@@ -8,6 +8,7 @@ servers:
     variables:
       host:
         default: localhost:3000
+  - url: https://projeto-vitoriacestas-backend.vercel.app
 paths:
   /api/auth/login:
     post:

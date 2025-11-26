@@ -10,7 +10,7 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 
 ### Ambiente publicado
 - Backend em produção: https://projeto-vitoriacestas-backend.vercel.app
-- Swagger em produção: https://projeto-vitoriacestas-backend.vercel.app/docs
+- Swagger em produção: https://projeto-vitoriacestas-backend.vercel.app/docs (renderizado pela mesma API via Express serverless)
 
 ## Endpoints
 - `POST /api/auth/login`: retorna token JWT para admin.
