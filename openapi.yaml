@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: API Estoque Vitória Cestas
+  version: 1.0.0
+  description: Endpoints para gestão de itens, fornecedores e autenticação admin.
+servers:
+  - url: https://{host}
+    variables:
+      host:
+        default: localhost:3000
+  - url: https://projeto-vitoriacestas-backend.vercel.app
+paths:
+  /api/auth/login:
+    post:
+      summary: Login administrador
+      tags: [Autenticação]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Token JWT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Credenciais inválidas
+  /api/items:
+    post:
+      summary: Cadastra novo item
+      tags: [Itens]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+      responses:
+        '201':
+          description: Item criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Falha de validação
+        '409':
+          description: Código duplicado
+  /api/suppliers:
+    post:
+      summary: Cadastra fornecedor
+      tags: [Fornecedores]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FornecedorInput'
+      responses:
+        '201':
+          description: Fornecedor criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FornecedorResponse'
+        '400':
+          description: Falha de validação
+        '409':
+          description: CNPJ duplicado
+components:
+  schemas:
+    ItemInput:
+      type: object
+      required: [codigo, nome, quantidade, preco]
+      properties:
+        codigo:
+          type: string
+        nome:
+          type: string
+        descricao:
+          type: string
+        categoria:
+          type: string
+        quantidade:
+          type: integer
+          minimum: 0
+        preco:
+          type: number
+          format: float
+          minimum: 0
+        fornecedorId:
+          type: integer
+          nullable: true
+    ItemResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        item:
+          allOf:
+            - $ref: '#/components/schemas/ItemInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    FornecedorInput:
+      type: object
+      required: [cnpj, razaoSocial, contato, email, telefone]
+      properties:
+        cnpj:
+          type: string
+        razaoSocial:
+          type: string
+        contato:
+          type: string
+        email:
+          type: string
+          format: email
+        telefone:
+          type: string
+        enderecoId:
+          type: integer
+          nullable: true
+    FornecedorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        supplier:
+          allOf:
+            - $ref: '#/components/schemas/FornecedorInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
