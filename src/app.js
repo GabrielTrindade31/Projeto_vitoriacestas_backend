@@ -29,7 +29,8 @@ function createApp({ itemRouter, supplierRouter, authRouter } = {}) {
   app.use(
     '/docs',
     swaggerUi.serve,
-    swaggerUi.setup(null, {
+    swaggerUi.setup(swaggerDocument, {
+      explorer: true,
       swaggerOptions: { url: '/docs/swagger.json' },
     })
   );
