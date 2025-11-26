@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro de Item</title>
+  <style>
+    :root {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #1f2937;
+      background: #f9fafb;
+    }
+    body { margin: 0; padding: 0; display: flex; justify-content: center; }
+    .container {
+      width: 100%;
+      max-width: 720px;
+      padding: 24px;
+    }
+    h1 { text-align: center; margin-bottom: 16px; }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .full-width { grid-column: 1 / -1; }
+    .actions { display: flex; justify-content: flex-end; gap: 12px; grid-column: 1 / -1; }
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .primary { background: #2563eb; color: white; }
+    .secondary { background: #e5e7eb; color: #111827; }
+    .feedback { grid-column: 1 / -1; padding: 12px; border-radius: 8px; display: none; }
+    .feedback.success { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+    .feedback.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cadastro de Item</h1>
+    <div id="feedback" class="feedback"></div>
+    <form id="itemForm" novalidate>
+      <div>
+        <label for="codigo">Código *</label>
+        <input type="text" id="codigo" name="codigo" required />
+      </div>
+      <div>
+        <label for="nome">Nome *</label>
+        <input type="text" id="nome" name="nome" required />
+      </div>
+      <div>
+        <label for="categoria">Categoria</label>
+        <input type="text" id="categoria" name="categoria" />
+      </div>
+      <div>
+        <label for="quantidade">Quantidade *</label>
+        <input type="number" id="quantidade" name="quantidade" min="0" required />
+      </div>
+      <div>
+        <label for="preco">Preço unitário *</label>
+        <input type="number" id="preco" name="preco" min="0" step="0.01" required />
+      </div>
+      <div>
+        <label for="fornecedor">Fornecedor</label>
+        <input type="text" id="fornecedor" name="fornecedor" />
+      </div>
+      <div class="full-width">
+        <label for="descricao">Descrição</label>
+        <textarea id="descricao" name="descricao"></textarea>
+      </div>
+      <div class="actions">
+        <button type="reset" class="secondary">Limpar</button>
+        <button type="submit" class="primary">Cadastrar</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById('itemForm');
+    const feedback = document.getElementById('feedback');
+
+    const requiredFields = ['codigo', 'nome', 'quantidade', 'preco'];
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      feedback.style.display = 'none';
+      feedback.className = 'feedback';
+
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+      payload.quantidade = Number(payload.quantidade);
+      payload.preco = Number(payload.preco);
+
+      const missing = requiredFields.filter((field) => !payload[field]);
+      if (missing.length) {
+        showFeedback('Preencha todos os campos obrigatórios.', 'error');
+        return;
+      }
+
+      if (Number.isNaN(payload.quantidade) || payload.quantidade < 0) {
+        showFeedback('Quantidade não pode ser negativa.', 'error');
+        return;
+      }
+
+      if (Number.isNaN(payload.preco) || payload.preco < 0) {
+        showFeedback('Preço deve ser um número positivo.', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const body = await response.json();
+        if (!response.ok) {
+          throw new Error(body.message || 'Erro ao cadastrar item');
+        }
+
+        showFeedback(body.message || 'Item cadastrado com sucesso', 'success');
+        form.reset();
+      } catch (error) {
+        showFeedback(error.message, 'error');
+      }
+    });
+
+    function showFeedback(message, type) {
+      feedback.textContent = message;
+      feedback.classList.add(type);
+      feedback.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
