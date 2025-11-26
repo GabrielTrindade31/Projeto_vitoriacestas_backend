@@ -35,10 +35,25 @@ describe('createItemService', () => {
     const repository = {
       findByCode: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockResolvedValue({ id: 1, ...basePayload }),
+      findAll: jest.fn(),
     };
     const service = createItemService(repository);
     const result = await service.createItem(basePayload);
     expect(result.id).toBe(1);
     expect(repository.create).toHaveBeenCalled();
+  });
+
+  it('retorna a lista de itens do repositório', async () => {
+    const repository = {
+      findByCode: jest.fn(),
+      create: jest.fn(),
+      findAll: jest.fn().mockResolvedValue([{ id: 99, codigo: 'XYZ', nome: 'Teste' }]),
+    };
+    const service = createItemService(repository);
+    const result = await service.listItems();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(99);
+    expect(repository.findAll).toHaveBeenCalled();
   });
 });

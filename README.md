@@ -21,8 +21,10 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 
 ## Endpoints
 - `POST /api/auth/login`: retorna token JWT para admin.
-- `POST /api/items`: cria item com validação de campos obrigatórios e código único.
-- `POST /api/suppliers`: cria fornecedor com validação de CNPJ, email e telefone.
+- `GET /api/items`: lista itens (exige Authorization: Bearer <token> para Admin/Gestor/Operador).
+- `POST /api/items`: cria item com validação de campos obrigatórios e código único (Admin/Gestor).
+- `GET /api/suppliers`: lista fornecedores (exige Authorization: Bearer <token> para Admin/Gestor/Operador).
+- `POST /api/suppliers`: cria fornecedor com validação de CNPJ, email e telefone (Admin).
 - `GET /health`: verificação de status.
 
 ## Banco de dados

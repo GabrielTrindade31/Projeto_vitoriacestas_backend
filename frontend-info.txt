@@ -1,8 +1,12 @@
-Rotas principais
-- POST /api/auth/login -> autentica administrador e retorna JWT (Authorization: Bearer <token>)
-- POST /api/items -> cria item com corpo { codigo, nome, descricao?, categoria?, quantidade, preco, fornecedorId? }
-- POST /api/suppliers -> cria fornecedor com corpo { cnpj, razaoSocial, contato, email, telefone, enderecoId? }
-- GET /docs -> interface Swagger para testes rápidos (em produção: https://projeto-vitoriacestas-backend.vercel.app/docs)
+Backend publicado: https://projeto-vitoriacestas-backend.vercel.app
+
+Rotas principais (todas começam com /api)
+- POST /auth/login -> autentica e retorna JWT (Authorization: Bearer <token>)
+- GET /items -> lista produtos cadastrados (Admin/Gestor/Operador, exige Authorization)
+- POST /items -> cria item com corpo { codigo, nome, descricao?, categoria?, quantidade, preco, fornecedorId? } (Admin/Gestor)
+- GET /suppliers -> lista fornecedores (Admin/Gestor/Operador, exige Authorization)
+- POST /suppliers -> cria fornecedor com corpo { cnpj, razaoSocial, contato, email, telefone, enderecoId? } (Admin)
+- GET /docs -> interface Swagger para testes rápidos (produção: /docs)
 - GET /health -> verificação de status
 
 Regras de validação para formulários web
@@ -10,13 +14,25 @@ Regras de validação para formulários web
 - Fornecedor: cnpj válido e único; razaoSocial, contato, email e telefone obrigatórios; email em formato válido; telefone aceita máscara brasileira.
 
 Fluxo sugerido de consumo no frontend
-1) Autenticar admin e salvar JWT em localStorage.
-2) Usar o token em requisições protegidas futuras (endpoints adicionais podem validar o header Authorization).
-3) Mostrar mensagens de sucesso/erro com base no JSON de resposta (campo message). Em produção, sempre use URLs relativas ao host do backend (`https://projeto-vitoriacestas-backend.vercel.app`) para evitar respostas HTML (ex.: "The page could not be found") que quebram o `JSON.parse`.
+1) Autenticar e salvar JWT em localStorage/sessionStorage.
+2) Em cada chamada protegida, enviar `Authorization: Bearer <token>`; sem esse header a API responde `{ "message": "Token não fornecido" }` com status 401.
+3) Usar GET /items e GET /suppliers para preencher tabelas antes de abrir modais de edição/cadastro.
+4) Mostrar mensagens de sucesso/erro com base no JSON de resposta (campo message). Em produção, sempre use URLs relativas ao host do backend (`https://projeto-vitoriacestas-backend.vercel.app`) para evitar respostas HTML (ex.: "The page could not be found") que quebram o `JSON.parse`.
 
 Headers padrão
 - Content-Type: application/json
 - Authorization: Bearer <jwt> (quando necessário)
+
+Exemplo de chamada com curl (criação de item)
+curl -X POST https://projeto-vitoriacestas-backend.vercel.app/api/items \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token obtido no /auth/login>" \
+  -d '{
+    "codigo": "ITEM01",
+    "nome": "Cesta Básica",
+    "quantidade": 10,
+    "preco": 99.9
+  }'
 
 Banco de dados
 - String de conexão via variável de ambiente DATABASE_URL (Postgres).

@@ -107,6 +107,28 @@ paths:
         '401':
           description: Refresh token inválido
   /api/items:
+    get:
+      summary: Lista itens cadastrados
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Itens retornados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra novo item
       tags: [Itens]
@@ -135,6 +157,28 @@ paths:
         '409':
           description: Código duplicado
   /api/suppliers:
+    get:
+      summary: Lista fornecedores cadastrados
+      tags: [Fornecedores]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Fornecedores retornados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suppliers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Fornecedor'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra fornecedor
       tags: [Fornecedores]
@@ -439,6 +483,13 @@ components:
               properties:
                 id:
                   type: integer
+    Item:
+      allOf:
+        - $ref: '#/components/schemas/ItemInput'
+        - type: object
+          properties:
+            id:
+              type: integer
     EnderecoInput:
       type: object
       required: [rua, cep, numero]
@@ -715,3 +766,10 @@ components:
               properties:
                 id:
                   type: integer
+    Fornecedor:
+      allOf:
+        - $ref: '#/components/schemas/FornecedorInput'
+        - type: object
+          properties:
+            id:
+              type: integer
