@@ -8,6 +8,13 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 3. Rode a aplicação com `npm start` (porta padrão 3000).
 4. Acesse `/docs` para documentação Swagger e `/` para o formulário de cadastro de itens.
 
+### Login e usuários padrão
+- O login já vem pré-carregado em memória (não depende do banco) com os perfis abaixo. Use-os no Swagger/`curl` ou sobrescreva via variáveis de ambiente (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `MANAGER_PASSWORD`, `OPERATOR_PASSWORD` etc.):
+  - Administrador: `admin@vitoriacestas.com` / `admin123`
+  - Gestor: `gestor@vitoriacestas.com` / `gestor123`
+  - Operador: `operador@vitoriacestas.com` / `operador123`
+- Para evitar erros de "Failed to fetch" no Swagger local, mantenha o servidor e a página da documentação em **http://localhost:3000** (usar `https://localhost` causa bloqueio de conteúdo misto pelo navegador).
+
 ### Ambiente publicado
 - Backend em produção: https://projeto-vitoriacestas-backend.vercel.app
 - Swagger em produção: https://projeto-vitoriacestas-backend.vercel.app/docs (renderizado pela mesma API via Express serverless)

@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
   title: API Estoque Vitória Cestas
-  version: 1.1.0
-  description: Endpoints para gestão de itens, fornecedores e autenticação com controle de perfis.
+  version: 1.2.0
+  description: Endpoints para gestão de itens, fornecedores, autenticação e demais cadastros previstos no banco de dados.
 servers:
-  - url: https://{host}
+  - url: http://{host}
     variables:
       host:
         default: localhost:3000
@@ -28,6 +28,22 @@ paths:
                   format: email
                 password:
                   type: string
+            examples:
+              admin:
+                summary: Administrador padrão (memória)
+                value:
+                  email: admin@vitoriacestas.com
+                  password: admin123
+              gestor:
+                summary: Gestor padrão (memória)
+                value:
+                  email: gestor@vitoriacestas.com
+                  password: gestor123
+              operador:
+                summary: Operador padrão (memória)
+                value:
+                  email: operador@vitoriacestas.com
+                  password: operador123
       responses:
         '200':
           description: Tokens gerados com sucesso
@@ -146,6 +162,242 @@ paths:
           description: Permissão insuficiente
         '409':
           description: CNPJ duplicado
+  /api/addresses:
+    post:
+      summary: Cadastra endereço
+      tags: [Endereços]
+      security:
+        - bearerAuth: []
+      description: Cria um novo endereço para ser associado a clientes ou fornecedores.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnderecoInput'
+      responses:
+        '201':
+          description: Endereço criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnderecoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/customers:
+    post:
+      summary: Cadastra cliente
+      tags: [Clientes]
+      security:
+        - bearerAuth: []
+      description: Cria um cliente com CPF ou CNPJ e endereço associado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteInput'
+      responses:
+        '201':
+          description: Cliente criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '409':
+          description: CPF ou CNPJ duplicado
+  /api/raw-materials:
+    post:
+      summary: Cadastra matéria-prima
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      description: Registra uma matéria-prima com informações de custo, validade e características.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MateriaPrimaInput'
+      responses:
+        '201':
+          description: Matéria-prima criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MateriaPrimaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/manufacturing:
+    post:
+      summary: Registra composição de manufatura
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      description: Define a relação entre produto e matéria-prima utilizada, com a quantidade consumida.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufaturaInput'
+      responses:
+        '201':
+          description: Relação de manufatura criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufaturaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/material-deliveries:
+    post:
+      summary: Cadastra entrada de matéria-prima
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      description: Registra a entrega de material por um fornecedor, incluindo data, quantidade e custo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntregaMaterialInput'
+      responses:
+        '201':
+          description: Entrada de material registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntregaMaterialResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/orders:
+    post:
+      summary: Cadastra pedido
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      description: Cria um pedido para um cliente, com dados do presenteado quando aplicável.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+      responses:
+        '201':
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/product-shipments:
+    post:
+      summary: Registra envio de produto
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      description: Liga um pedido a um produto enviado, com data e preço aplicados.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvioProdutoInput'
+      responses:
+        '201':
+          description: Envio registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioProdutoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/feedbacks:
+    post:
+      summary: Cadastra feedback
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      description: Registra a avaliação de um cliente sobre um pedido ou serviço prestado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackInput'
+      responses:
+        '201':
+          description: Feedback registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/phones:
+    post:
+      summary: Cadastra telefone de cliente
+      tags: [Telefones]
+      security:
+        - bearerAuth: []
+      description: Associa um telefone adicional a um cliente existente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelefoneInput'
+      responses:
+        '201':
+          description: Telefone cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelefoneResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
 components:
   securitySchemes:
     bearerAuth:
@@ -183,6 +435,252 @@ components:
         item:
           allOf:
             - $ref: '#/components/schemas/ItemInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    EnderecoInput:
+      type: object
+      required: [rua, cep, numero]
+      properties:
+        rua:
+          type: string
+        cep:
+          type: string
+        numero:
+          type: string
+    EnderecoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        address:
+          allOf:
+            - $ref: '#/components/schemas/EnderecoInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    ClienteInput:
+      type: object
+      required: [nome]
+      properties:
+        cnpj:
+          type: string
+        cpf:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+          format: email
+        enderecoId:
+          type: integer
+          nullable: true
+    ClienteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        customer:
+          allOf:
+            - $ref: '#/components/schemas/ClienteInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    MateriaPrimaInput:
+      type: object
+      required: [nome]
+      properties:
+        nome:
+          type: string
+        tipo:
+          type: string
+        custo:
+          type: number
+          format: float
+        dataValidade:
+          type: string
+          format: date
+        descricao:
+          type: string
+        tamanho:
+          type: string
+        material:
+          type: string
+        acessorio:
+          type: string
+    MateriaPrimaResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        material:
+          allOf:
+            - $ref: '#/components/schemas/MateriaPrimaInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    ManufaturaInput:
+      type: object
+      required: [produtoId, materialId, quantidadeMaterial]
+      properties:
+        produtoId:
+          type: integer
+        materialId:
+          type: integer
+        quantidadeMaterial:
+          type: integer
+    ManufaturaResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        manufacturing:
+          allOf:
+            - $ref: '#/components/schemas/ManufaturaInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    EntregaMaterialInput:
+      type: object
+      required: [materialId, fornecedorId, quantidade, dataEntrada]
+      properties:
+        materialId:
+          type: integer
+        fornecedorId:
+          type: integer
+        quantidade:
+          type: integer
+        dataEntrada:
+          type: string
+          format: date
+        custo:
+          type: number
+          format: float
+    EntregaMaterialResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        delivery:
+          allOf:
+            - $ref: '#/components/schemas/EntregaMaterialInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    PedidoInput:
+      type: object
+      required: [clienteId, preco, dataPedido]
+      properties:
+        clienteId:
+          type: integer
+        endereco:
+          type: string
+        preco:
+          type: number
+          format: float
+        dataPedido:
+          type: string
+          format: date
+        cpfPresentado:
+          type: string
+        nomePresentado:
+          type: string
+        emailPresentado:
+          type: string
+          format: email
+        enderecoPresentado:
+          type: string
+    PedidoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        order:
+          allOf:
+            - $ref: '#/components/schemas/PedidoInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    EnvioProdutoInput:
+      type: object
+      required: [pedidoId, produtoId, quantidade]
+      properties:
+        pedidoId:
+          type: integer
+        produtoId:
+          type: integer
+        quantidade:
+          type: integer
+        dataEnvio:
+          type: string
+          format: date
+        preco:
+          type: number
+          format: float
+    EnvioProdutoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        shipment:
+          allOf:
+            - $ref: '#/components/schemas/EnvioProdutoInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    FeedbackInput:
+      type: object
+      required: [clienteId, nota]
+      properties:
+        clienteId:
+          type: integer
+        data:
+          type: string
+          format: date
+        nota:
+          type: integer
+        contato:
+          type: string
+        observacao:
+          type: string
+    FeedbackResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        feedback:
+          allOf:
+            - $ref: '#/components/schemas/FeedbackInput'
+            - type: object
+              properties:
+                id:
+                  type: integer
+    TelefoneInput:
+      type: object
+      required: [clienteId, numero]
+      properties:
+        clienteId:
+          type: integer
+        ddd:
+          type: string
+        numero:
+          type: string
+    TelefoneResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        phone:
+          allOf:
+            - $ref: '#/components/schemas/TelefoneInput'
             - type: object
               properties:
                 id:
