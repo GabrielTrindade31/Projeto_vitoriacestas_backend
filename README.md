@@ -8,6 +8,10 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 3. Rode a aplicação com `npm start` (porta padrão 3000).
 4. Acesse `/docs` para documentação Swagger e `/` para o formulário de cadastro de itens.
 
+### Ambiente publicado
+- Backend em produção: https://projeto-vitoriacestas-backend.vercel.app
+- Swagger em produção: https://projeto-vitoriacestas-backend.vercel.app/docs
+
 ## Endpoints
 - `POST /api/auth/login`: retorna token JWT para admin.
 - `POST /api/items`: cria item com validação de campos obrigatórios e código único.
