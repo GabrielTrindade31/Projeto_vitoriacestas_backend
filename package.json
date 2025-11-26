@@ -18,8 +18,7 @@
     "bcryptjs": "^2.4.3",
     "pg": "^8.12.0",
     "swagger-ui-express": "^5.0.1",
-    "yamljs": "^0.3.0",
-    "serverless-http": "^3.2.0"
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
