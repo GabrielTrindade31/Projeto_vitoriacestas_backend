@@ -26,7 +26,8 @@ CREATE TABLE cliente (
   cpf VARCHAR(14) UNIQUE,
   nome TEXT NOT NULL,
   email TEXT,
-  endereco_id INTEGER REFERENCES endereco(id)
+  -- Endereço é opcional e pode ser removido sem quebrar o cadastro do cliente.
+  endereco_id INTEGER REFERENCES endereco(id) ON DELETE SET NULL
 );
 
 -- Fornecedores utilizados pelos produtos.
@@ -37,7 +38,8 @@ CREATE TABLE fornecedor (
   contato TEXT NOT NULL,
   email TEXT,
   telefone VARCHAR(20),
-  endereco_id INTEGER REFERENCES endereco(id)
+  -- Endereço opcional para que o front possa omitir ou limpar o vínculo.
+  endereco_id INTEGER REFERENCES endereco(id) ON DELETE SET NULL
 );
 
 -- descricao, categoria, quantidade, preco e fornecedorId).
@@ -76,7 +78,8 @@ CREATE TABLE manufatura (
 CREATE TABLE entrega_material (
   id SERIAL PRIMARY KEY,
   material_id INTEGER REFERENCES materia_prima(id),
-  fornecedor_id INTEGER REFERENCES fornecedor(id),
+  -- Se o fornecedor for apagado, a entrega permanece registrada porém sem vínculo.
+  fornecedor_id INTEGER REFERENCES fornecedor(id) ON DELETE SET NULL,
   quantidade INTEGER,
   data_entrada DATE,
   custo NUMERIC(12,2)
