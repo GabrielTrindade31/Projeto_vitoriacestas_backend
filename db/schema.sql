@@ -1,4 +1,17 @@
--- Schema baseado no diagrama fornecido
+-- A ordem de exclusão respeita as FKs para permitir recriação rápida do ambiente.
+DROP TABLE IF EXISTS envio_produto    CASCADE;
+DROP TABLE IF EXISTS pedido           CASCADE;
+DROP TABLE IF EXISTS feedback         CASCADE;
+DROP TABLE IF EXISTS telefones        CASCADE;
+DROP TABLE IF EXISTS manufatura       CASCADE;
+DROP TABLE IF EXISTS entrega_material CASCADE;
+DROP TABLE IF EXISTS materia_prima    CASCADE;
+DROP TABLE IF EXISTS produto          CASCADE;
+DROP TABLE IF EXISTS fornecedor       CASCADE;
+DROP TABLE IF EXISTS cliente          CASCADE;
+DROP TABLE IF EXISTS endereco         CASCADE;
+
+-- Endereços são compartilhados entre clientes e fornecedores.
 CREATE TABLE endereco (
   id SERIAL PRIMARY KEY,
   rua TEXT NOT NULL,
@@ -6,6 +19,7 @@ CREATE TABLE endereco (
   numero VARCHAR(10) NOT NULL
 );
 
+-- Clientes finais.
 CREATE TABLE cliente (
   id SERIAL PRIMARY KEY,
   cnpj VARCHAR(18) UNIQUE,
@@ -15,6 +29,7 @@ CREATE TABLE cliente (
   endereco_id INTEGER REFERENCES endereco(id)
 );
 
+-- Fornecedores utilizados pelos produtos.
 CREATE TABLE fornecedor (
   id SERIAL PRIMARY KEY,
   cnpj VARCHAR(18) NOT NULL UNIQUE,
@@ -25,6 +40,7 @@ CREATE TABLE fornecedor (
   endereco_id INTEGER REFERENCES endereco(id)
 );
 
+-- descricao, categoria, quantidade, preco e fornecedorId).
 CREATE TABLE produto (
   id SERIAL PRIMARY KEY,
   codigo VARCHAR(50) NOT NULL UNIQUE,
@@ -33,7 +49,9 @@ CREATE TABLE produto (
   categoria TEXT,
   quantidade INTEGER DEFAULT 0 CHECK (quantidade >= 0),
   preco NUMERIC(12,2) DEFAULT 0,
-  fornecedor_id INTEGER REFERENCES fornecedor(id)
+  -- O fornecedor é opcional: quando fornecido precisa existir, mas se o
+  -- registro for removido, o produto fica sem fornecedor em vez de quebrar.
+  fornecedor_id INTEGER REFERENCES fornecedor(id) ON DELETE SET NULL
 );
 
 CREATE TABLE materia_prima (
