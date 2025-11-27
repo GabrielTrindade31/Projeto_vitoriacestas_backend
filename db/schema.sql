@@ -1,4 +1,17 @@
--- Schema baseado no diagrama fornecido
+-- A ordem de exclusão respeita as FKs para permitir recriação rápida do ambiente.
+DROP TABLE IF EXISTS envio_produto    CASCADE;
+DROP TABLE IF EXISTS pedido           CASCADE;
+DROP TABLE IF EXISTS feedback         CASCADE;
+DROP TABLE IF EXISTS telefones        CASCADE;
+DROP TABLE IF EXISTS manufatura       CASCADE;
+DROP TABLE IF EXISTS entrega_material CASCADE;
+DROP TABLE IF EXISTS materia_prima    CASCADE;
+DROP TABLE IF EXISTS produto          CASCADE;
+DROP TABLE IF EXISTS fornecedor       CASCADE;
+DROP TABLE IF EXISTS cliente          CASCADE;
+DROP TABLE IF EXISTS endereco         CASCADE;
+
+-- Endereços são compartilhados entre clientes e fornecedores.
 CREATE TABLE endereco (
   id SERIAL PRIMARY KEY,
   rua TEXT NOT NULL,
@@ -6,6 +19,7 @@ CREATE TABLE endereco (
   numero VARCHAR(10) NOT NULL
 );
 
+-- Clientes finais.
 CREATE TABLE cliente (
   id SERIAL PRIMARY KEY,
   cnpj VARCHAR(18) UNIQUE,
@@ -15,6 +29,7 @@ CREATE TABLE cliente (
   endereco_id INTEGER REFERENCES endereco(id)
 );
 
+-- Fornecedores utilizados pelos produtos.
 CREATE TABLE fornecedor (
   id SERIAL PRIMARY KEY,
   cnpj VARCHAR(18) NOT NULL UNIQUE,
@@ -25,6 +40,8 @@ CREATE TABLE fornecedor (
   endereco_id INTEGER REFERENCES endereco(id)
 );
 
+-- Produtos vendidos; corresponde aos campos usados pelo backend (codigo, nome,
+-- descricao, categoria, quantidade, preco e fornecedorId).
 CREATE TABLE produto (
   id SERIAL PRIMARY KEY,
   codigo VARCHAR(50) NOT NULL UNIQUE,
