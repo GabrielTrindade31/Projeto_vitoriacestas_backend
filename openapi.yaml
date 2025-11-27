@@ -292,7 +292,7 @@ paths:
       tags: [Clientes]
       security:
         - bearerAuth: []
-      description: Cria um cliente com CPF ou CNPJ e endereço associado.
+      description: Cria um cliente com CPF ou CNPJ, data de nascimento e endereço obrigatório.
       requestBody:
         required: true
         content:
@@ -761,7 +761,7 @@ components:
                   type: integer
     ClienteInput:
       type: object
-      required: [nome]
+      required: [nome, dataNascimento, enderecoId]
       properties:
         cnpj:
           type: string
@@ -772,10 +772,12 @@ components:
         email:
           type: string
           format: email
+        dataNascimento:
+          type: string
+          format: date
         enderecoId:
           type: integer
-          nullable: true
-          default: null
+          nullable: false
     ClienteResponse:
       type: object
       properties:

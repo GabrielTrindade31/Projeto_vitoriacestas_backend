@@ -6,6 +6,8 @@ Rotas principais (todas começam com /api)
 - POST /items -> cria item. Campos aceitos: { codigo, nome, descricao?, categoria?, quantidade?, preco?, fornecedorId? }. Quantidade e preço assumem 0 quando ausentes ou enviados como null; fornecedorId pode ser null ou omitido.
 - GET /suppliers -> lista fornecedores (Admin/Gestor/Operador, exige Authorization)
 - POST /suppliers -> cria fornecedor. Campos aceitos: { cnpj, razaoSocial, contato, email, telefone, enderecoId? }. enderecoId pode ser null ou omitido; demais campos aceitam string vazia/null apenas se a validação do front permitir.
+- GET /customers -> lista clientes (Admin/Gestor/Operador, exige Authorization)
+- POST /customers -> cria cliente. Campos aceitos: { nome, cpf?, cnpj?, email?, dataNascimento, enderecoId }. enderecoId é obrigatório e precisa apontar para um endereço existente; dataNascimento é obrigatória.
 - GET /docs -> interface Swagger para testes rápidos (produção: /docs)
 - GET /health -> verificação de status
 
@@ -15,10 +17,11 @@ Rotas planejadas/consultas por tabela
 Regras de validação para formulários web
 - Item: codigo e nome obrigatórios; quantidade e preço default 0 quando não enviados; quantidade >= 0; preço >= 0; código único. fornecedorId é opcional e deve ser null/omitido quando não houver fornecedor.
 - Fornecedor: cnpj válido e único; razaoSocial, contato, email e telefone geralmente obrigatórios no front; enderecoId é opcional e pode ser null. Mesmo se um fornecedor for removido, produtos ou entregas associados permanecem com fornecedorId = null.
+- Cliente: nome, enderecoId e dataNascimento obrigatórios; cpf e cnpj opcionais, porém únicos se informados. Para cadastrar o cliente é necessário ter criado o endereço antes e informar o ID retornado.
 
 Sugestão de ordem de cadastro e dependências
 1) Endereços (POST /addresses) e telefones (POST /phones) são opcionais, mas podem ser criados antes para reaproveitar IDs.
-2) Clientes (POST /customers) recebem enderecoId opcional. Telefones adicionais apontam para o cliente via clienteId.
+2) Clientes (POST /customers) exigem enderecoId e dataNascimento. Telefones adicionais apontam para o cliente via clienteId e dependem do cliente existir.
 3) Fornecedores (POST /suppliers) podem ser criados sem endereço; produtos ficam com fornecedorId = null quando não houver vínculo.
 4) Matéria-prima (POST /raw-materials) deve ser criada antes de manufatura ou entregas de material. Quantidade/custo não enviados ficam em 0.
 5) Produtos (POST /items) podem representar cestas prontas. Eles podem ou não depender de fornecedor e depois podem ser ligados a matérias-primas via manufatura.

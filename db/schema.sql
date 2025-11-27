@@ -26,8 +26,9 @@ CREATE TABLE cliente (
   cpf VARCHAR(14) UNIQUE,
   nome TEXT NOT NULL,
   email TEXT,
-  -- Endereço é opcional, permanece registrando o campo mesmo quando for nulo.
-  endereco_id INTEGER DEFAULT NULL REFERENCES endereco(id) ON DELETE SET NULL
+  data_nascimento DATE NOT NULL,
+  -- Endereço é obrigatório para permitir faturamento/entrega.
+  endereco_id INTEGER NOT NULL REFERENCES endereco(id)
 );
 
 -- Fornecedores utilizados pelos produtos.
