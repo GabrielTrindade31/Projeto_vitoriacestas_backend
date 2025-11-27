@@ -3,15 +3,32 @@ Backend publicado: https://projeto-vitoriacestas-backend.vercel.app
 Rotas principais (todas começam com /api)
 - POST /auth/login -> autentica e retorna JWT (Authorization: Bearer <token>)
 - GET /items -> lista produtos cadastrados (Admin/Gestor/Operador, exige Authorization)
-- POST /items -> cria item com corpo { codigo, nome, descricao?, categoria?, quantidade, preco, fornecedorId? } (Admin/Gestor)
+- POST /items -> cria item. Campos aceitos: { codigo, nome, descricao?, categoria?, quantidade?, preco?, fornecedorId? }. Quantidade e preço assumem 0 quando ausentes ou enviados como null; fornecedorId pode ser null ou omitido.
 - GET /suppliers -> lista fornecedores (Admin/Gestor/Operador, exige Authorization)
-- POST /suppliers -> cria fornecedor com corpo { cnpj, razaoSocial, contato, email, telefone, enderecoId? } (Admin)
+- POST /suppliers -> cria fornecedor. Campos aceitos: { cnpj, razaoSocial, contato, email, telefone, enderecoId? }. enderecoId pode ser null ou omitido; demais campos aceitam string vazia/null apenas se a validação do front permitir.
+- GET /customers -> lista clientes (Admin/Gestor/Operador, exige Authorization)
+- POST /customers -> cria cliente. Campos aceitos: { nome, cpf?, cnpj?, email?, dataNascimento, enderecoId }. enderecoId é obrigatório e precisa apontar para um endereço existente; dataNascimento é obrigatória.
 - GET /docs -> interface Swagger para testes rápidos (produção: /docs)
 - GET /health -> verificação de status
 
+Rotas planejadas/consultas por tabela
+- GET /addresses, /customers, /raw-materials, /manufacturing, /material-deliveries, /orders, /product-shipments, /feedbacks, /phones -> previstas no OpenAPI para listar cada tabela. Ideal para montar tabelas no front; seguem o mesmo padrão de autorização JWT das rotas existentes.
+
 Regras de validação para formulários web
-- Item: codigo, nome, quantidade e preco obrigatórios; quantidade >= 0; preço >= 0; código único.
-- Fornecedor: cnpj válido e único; razaoSocial, contato, email e telefone obrigatórios; email em formato válido; telefone aceita máscara brasileira.
+- Item: codigo e nome obrigatórios; quantidade e preço default 0 quando não enviados; quantidade >= 0; preço >= 0; código único. fornecedorId é opcional e deve ser null/omitido quando não houver fornecedor.
+- Fornecedor: cnpj válido e único; razaoSocial, contato, email e telefone geralmente obrigatórios no front; enderecoId é opcional e pode ser null. Mesmo se um fornecedor for removido, produtos ou entregas associados permanecem com fornecedorId = null.
+- Cliente: nome, enderecoId e dataNascimento obrigatórios; cpf e cnpj opcionais, porém únicos se informados. Para cadastrar o cliente é necessário ter criado o endereço antes e informar o ID retornado.
+
+Sugestão de ordem de cadastro e dependências
+1) Endereços (POST /addresses) e telefones (POST /phones) são opcionais, mas podem ser criados antes para reaproveitar IDs.
+2) Clientes (POST /customers) exigem enderecoId e dataNascimento. Telefones adicionais apontam para o cliente via clienteId e dependem do cliente existir.
+3) Fornecedores (POST /suppliers) podem ser criados sem endereço; produtos ficam com fornecedorId = null quando não houver vínculo.
+4) Matéria-prima (POST /raw-materials) deve ser criada antes de manufatura ou entregas de material. Quantidade/custo não enviados ficam em 0.
+5) Produtos (POST /items) podem representar cestas prontas. Eles podem ou não depender de fornecedor e depois podem ser ligados a matérias-primas via manufatura.
+6) Manufatura (POST /manufacturing) liga produtoId e materialId; ambos podem ser nullados se um dos registros for removido.
+7) Entregas de material (POST /material-deliveries) referenciam matéria-prima e fornecedor, mas aceitam vínculos nulos quando os cadastros forem apagados; quantidade/custo default 0.
+8) Pedidos (POST /orders) e envios (POST /product-shipments) podem ficar com clienteId/produtoId/pedidoId nulos se os registros forem apagados, preservando o histórico. Preços e quantidades default 0 quando ausentes.
+9) Feedbacks (POST /feedbacks) referenciam clienteId opcionalmente; nota recebe 0 se não enviada.
 
 Fluxo sugerido de consumo no frontend
 1) Autenticar e salvar JWT em localStorage/sessionStorage.
@@ -41,4 +58,4 @@ Banco de dados
 Como testar localmente
 - Instalar dependências (npm install) e rodar npm start.
 - Acessar http://localhost:3000/ para abrir o formulário de cadastro de itens.
-- Acessar http://localhost:3000/docs para ver e testar os endpoints.
+- Acessar http://localhost:3000/docs para ver e testar os endpoints e entender os GET/POST previstos para cada tabela.

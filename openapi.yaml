@@ -207,6 +207,33 @@ paths:
         '409':
           description: CNPJ duplicado
   /api/addresses:
+    get:
+      summary: Lista endereços cadastrados
+      tags: [Endereços]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Endereços retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addresses:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EnderecoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra endereço
       tags: [Endereços]
@@ -233,12 +260,39 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/customers:
+    get:
+      summary: Lista clientes cadastrados
+      tags: [Clientes]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Clientes retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ClienteInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra cliente
       tags: [Clientes]
       security:
         - bearerAuth: []
-      description: Cria um cliente com CPF ou CNPJ e endereço associado.
+      description: Cria um cliente com CPF ou CNPJ, data de nascimento e endereço obrigatório.
       requestBody:
         required: true
         content:
@@ -261,6 +315,33 @@ paths:
         '409':
           description: CPF ou CNPJ duplicado
   /api/raw-materials:
+    get:
+      summary: Lista matérias-primas
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Materiais retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  materials:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/MateriaPrimaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra matéria-prima
       tags: [Matérias-primas]
@@ -287,6 +368,33 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/manufacturing:
+    get:
+      summary: Lista relações de manufatura
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Relações retornadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  manufacturing:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ManufaturaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Registra composição de manufatura
       tags: [Manufatura]
@@ -313,6 +421,33 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/material-deliveries:
+    get:
+      summary: Lista entradas de matéria-prima
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Entradas retornadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EntregaMaterialInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra entrada de matéria-prima
       tags: [Entregas de Material]
@@ -339,6 +474,33 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/orders:
+    get:
+      summary: Lista pedidos
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Pedidos retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/PedidoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra pedido
       tags: [Pedidos]
@@ -365,6 +527,33 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/product-shipments:
+    get:
+      summary: Lista envios de produtos
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Envios retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shipments:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EnvioProdutoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Registra envio de produto
       tags: [Envios]
@@ -391,6 +580,33 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/feedbacks:
+    get:
+      summary: Lista feedbacks
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Feedbacks retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feedbacks:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/FeedbackInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra feedback
       tags: [Feedbacks]
@@ -417,6 +633,33 @@ paths:
         '403':
           description: Permissão insuficiente
   /api/phones:
+    get:
+      summary: Lista telefones de clientes
+      tags: [Telefones]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Telefones retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  phones:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/TelefoneInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
     post:
       summary: Cadastra telefone de cliente
       tags: [Telefones]
@@ -463,11 +706,15 @@ components:
           type: string
         quantidade:
           type: integer
+          nullable: true
           minimum: 0
+          default: 0
         preco:
           type: number
           format: float
           minimum: 0
+          nullable: true
+          default: 0
         fornecedorId:
           type: integer
           nullable: true
@@ -514,7 +761,7 @@ components:
                   type: integer
     ClienteInput:
       type: object
-      required: [nome]
+      required: [nome, dataNascimento, enderecoId]
       properties:
         cnpj:
           type: string
@@ -525,9 +772,12 @@ components:
         email:
           type: string
           format: email
+        dataNascimento:
+          type: string
+          format: date
         enderecoId:
           type: integer
-          nullable: true
+          nullable: false
     ClienteResponse:
       type: object
       properties:
@@ -551,6 +801,8 @@ components:
         custo:
           type: number
           format: float
+          nullable: true
+          default: 0
         dataValidade:
           type: string
           format: date
@@ -584,6 +836,8 @@ components:
           type: integer
         quantidadeMaterial:
           type: integer
+          default: 0
+          minimum: 0
     ManufaturaResponse:
       type: object
       properties:
@@ -598,20 +852,26 @@ components:
                   type: integer
     EntregaMaterialInput:
       type: object
-      required: [materialId, fornecedorId, quantidade, dataEntrada]
+      required: [materialId, quantidade, dataEntrada]
       properties:
         materialId:
           type: integer
         fornecedorId:
           type: integer
+          nullable: true
+          default: null
         quantidade:
           type: integer
+          default: 0
+          minimum: 0
         dataEntrada:
           type: string
           format: date
         custo:
           type: number
           format: float
+          nullable: true
+          default: 0
     EntregaMaterialResponse:
       type: object
       properties:
@@ -630,11 +890,14 @@ components:
       properties:
         clienteId:
           type: integer
+          nullable: true
         endereco:
           type: string
         preco:
           type: number
           format: float
+          default: 0
+          minimum: 0
         dataPedido:
           type: string
           format: date
@@ -665,16 +928,22 @@ components:
       properties:
         pedidoId:
           type: integer
+          nullable: true
         produtoId:
           type: integer
+          nullable: true
         quantidade:
           type: integer
+          default: 0
+          minimum: 0
         dataEnvio:
           type: string
           format: date
         preco:
           type: number
           format: float
+          default: 0
+          minimum: 0
     EnvioProdutoResponse:
       type: object
       properties:
@@ -693,11 +962,13 @@ components:
       properties:
         clienteId:
           type: integer
+          nullable: true
         data:
           type: string
           format: date
         nota:
           type: integer
+          default: 0
         contato:
           type: string
         observacao:
