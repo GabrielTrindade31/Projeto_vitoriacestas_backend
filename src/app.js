@@ -7,9 +7,10 @@ const YAML = require('yamljs');
 const buildItemRouter = require('./routes/items');
 const buildSupplierRouter = require('./routes/suppliers');
 const buildAuthRouter = require('./routes/auth');
+const buildCoreDataRouter = require('./routes/coreData');
 const { rateLimit } = require('./middlewares/authentication');
 
-function createApp({ itemRouter, supplierRouter, authRouter } = {}) {
+function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = {}) {
   const app = express();
   const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
 
@@ -21,6 +22,7 @@ function createApp({ itemRouter, supplierRouter, authRouter } = {}) {
   app.use('/api/items', itemRouter || buildItemRouter());
   app.use('/api/suppliers', supplierRouter || buildSupplierRouter());
   app.use('/api/auth', authRouter || buildAuthRouter());
+  app.use('/api', coreDataRouter || buildCoreDataRouter());
 
   app.get('/docs/swagger.json', (_, res) => {
     res.type('application/json').send(swaggerDocument);
