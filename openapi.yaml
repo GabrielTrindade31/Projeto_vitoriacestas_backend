@@ -73,11 +73,91 @@ paths:
           description: Requisição inválida
         '401':
           description: Credenciais inválidas
+  /auth/login:
+    post:
+      summary: Login com perfis (alias)
+      tags: [Autenticação]
+      description: Alias sem prefixo de /api para autenticar usuários e retornar tokens de acesso e refresh.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Tokens gerados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      name:
+                        type: string
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  expiresIn:
+                    type: string
+        '400':
+          description: Requisição inválida
+        '401':
+          description: Credenciais inválidas
   /api/auth/refresh:
     post:
       summary: Renovação de tokens
       tags: [Autenticação]
       description: Gera um novo par de tokens a partir de um refresh token válido.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Tokens renovados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  expiresIn:
+                    type: string
+        '400':
+          description: Requisição inválida
+        '401':
+          description: Refresh token inválido
+  /auth/refresh:
+    post:
+      summary: Renovação de tokens (alias)
+      tags: [Autenticação]
+      description: Alias sem prefixo /api para renovar tokens a partir de um refresh token válido.
       requestBody:
         required: true
         content:
@@ -206,6 +286,78 @@ paths:
           description: Permissão insuficiente
         '409':
           description: Código duplicado
+  /api/upload:
+    post:
+      summary: Upload de imagem opcional
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Recebe um arquivo de imagem (campo `file`) e retorna metadados do upload. Alias disponível também em `/upload`.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Upload recebido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Upload recebido
+                  filename:
+                    type: string
+                  mimetype:
+                    type: string
+                  size:
+                    type: integer
+        '400':
+          description: Nenhum arquivo foi enviado
+  /upload:
+    post:
+      summary: Upload de imagem opcional (alias)
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Alias direto de `/api/upload` para receber um arquivo (campo `file`) e retornar metadados do upload.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Upload recebido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Upload recebido
+                  filename:
+                    type: string
+                  mimetype:
+                    type: string
+                  size:
+                    type: integer
+        '400':
+          description: Nenhum arquivo foi enviado
   /api/suppliers:
     get:
       summary: Lista fornecedores cadastrados
@@ -235,6 +387,56 @@ paths:
       security:
         - bearerAuth: []
       description: Disponível apenas para perfil Admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FornecedorInput'
+      responses:
+        '201':
+          description: Fornecedor criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FornecedorResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '409':
+          description: CNPJ duplicado
+  /suppliers:
+    get:
+      summary: Lista fornecedores cadastrados (alias)
+      tags: [Fornecedores]
+      security:
+        - bearerAuth: []
+      description: Alias sem prefixo /api para compatibilidade com o frontend.
+      responses:
+        '200':
+          description: Fornecedores retornados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suppliers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Fornecedor'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Cadastra fornecedor (alias)
+      tags: [Fornecedores]
+      security:
+        - bearerAuth: []
+      description: Alias de `/api/suppliers` para criação de fornecedores.
       requestBody:
         required: true
         content:
@@ -523,6 +725,59 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/manufaturas:
+    get:
+      summary: Lista relações de manufatura (alias)
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      description: Alias português para /api/manufacturing, disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Relações retornadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  manufacturing:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ManufaturaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Registra composição de manufatura (alias)
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      description: Disponível em português como alias de /api/manufacturing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufaturaInput'
+      responses:
+        '201':
+          description: Relação de manufatura criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufaturaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
   /api/material-deliveries:
     get:
       summary: Lista entradas de matéria-prima
@@ -557,6 +812,59 @@ paths:
       security:
         - bearerAuth: []
       description: Registra a entrega de material por um fornecedor, incluindo data, quantidade e custo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntregaMaterialInput'
+      responses:
+        '201':
+          description: Entrada de material registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntregaMaterialResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/entregas-material:
+    get:
+      summary: Lista entradas de matéria-prima (alias)
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      description: Alias em português para /api/material-deliveries.
+      responses:
+        '200':
+          description: Entradas retornadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EntregaMaterialInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Cadastra entrada de matéria-prima (alias)
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      description: Endpoint em português equivalente a /api/material-deliveries.
       requestBody:
         required: true
         content:
@@ -629,6 +937,59 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/pedidos:
+    get:
+      summary: Lista pedidos (alias)
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      description: Alias em português para /api/orders.
+      responses:
+        '200':
+          description: Pedidos retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/PedidoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Cadastra pedido (alias)
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      description: Endpoint em português equivalente a /api/orders.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+      responses:
+        '201':
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
   /api/product-shipments:
     get:
       summary: Lista envios de produtos
@@ -682,6 +1043,59 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/envios:
+    get:
+      summary: Lista envios de produtos (alias)
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      description: Alias em português para /api/product-shipments.
+      responses:
+        '200':
+          description: Envios retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shipments:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EnvioProdutoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Registra envio de produto (alias)
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      description: Endpoint em português equivalente a /api/product-shipments.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvioProdutoInput'
+      responses:
+        '201':
+          description: Envio registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioProdutoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
   /api/feedbacks:
     get:
       summary: Lista feedbacks
@@ -716,6 +1130,59 @@ paths:
       security:
         - bearerAuth: []
       description: Registra a avaliação de um cliente sobre um pedido ou serviço prestado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackInput'
+      responses:
+        '201':
+          description: Feedback registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/feedback:
+    get:
+      summary: Lista feedbacks (alias)
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      description: Alias singular para /api/feedbacks.
+      responses:
+        '200':
+          description: Feedbacks retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feedbacks:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/FeedbackInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Cadastra feedback (alias)
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      description: Endpoint singular equivalente a /api/feedbacks.
       requestBody:
         required: true
         content:

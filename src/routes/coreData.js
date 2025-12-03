@@ -88,7 +88,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.get('/material-deliveries', auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
+  router.get(['/material-deliveries', '/entregas-material'], auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
     try {
       const deliveries = await service.listMaterialDeliveries();
       return res.status(200).json({ deliveries });
@@ -98,7 +98,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.post('/material-deliveries', auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
+  router.post(['/material-deliveries', '/entregas-material'], auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
     try {
       const delivery = await service.createMaterialDelivery(req.body);
       return res.status(201).json({ message: 'Entrega de material registrada com sucesso', delivery });
@@ -108,7 +108,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.get('/manufacturing', auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
+  router.get(['/manufacturing', '/manufaturas'], auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
     try {
       const manufacturing = await service.listManufacturing();
       return res.status(200).json({ manufacturing });
@@ -118,7 +118,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.post('/manufacturing', auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
+  router.post(['/manufacturing', '/manufaturas'], auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
     try {
       const manufacturing = await service.createManufacturing(req.body);
       return res.status(201).json({ message: 'Relação de manufatura registrada com sucesso', manufacturing });
@@ -128,7 +128,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.get('/orders', auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
+  router.get(['/orders', '/pedidos'], auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
     try {
       const orders = await service.listOrders();
       return res.status(200).json({ orders });
@@ -138,7 +138,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.post('/orders', auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
+  router.post(['/orders', '/pedidos'], auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
     try {
       const order = await service.createOrder(req.body);
       return res.status(201).json({ message: 'Pedido registrado com sucesso', order });
@@ -148,7 +148,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.get('/product-shipments', auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
+  router.get(['/product-shipments', '/envios'], auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
     try {
       const shipments = await service.listShipments();
       return res.status(200).json({ shipments });
@@ -158,7 +158,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.post('/product-shipments', auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
+  router.post(['/product-shipments', '/envios'], auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
     try {
       const shipment = await service.createShipment(req.body);
       return res.status(201).json({ message: 'Envio registrado com sucesso', shipment });
@@ -168,7 +168,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.get('/feedbacks', auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
+  router.get(['/feedbacks', '/feedback'], auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
     try {
       const feedbacks = await service.listFeedbacks();
       return res.status(200).json({ feedbacks });
@@ -178,7 +178,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.post('/feedbacks', auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
+  router.post(['/feedbacks', '/feedback'], auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
     try {
       const feedback = await service.createFeedback(req.body);
       return res.status(201).json({ message: 'Feedback registrado com sucesso', feedback });
