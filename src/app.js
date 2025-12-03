@@ -14,15 +14,22 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const app = express();
   const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
 
+  const resolvedItemRouter = itemRouter || buildItemRouter();
+  const resolvedSupplierRouter = supplierRouter || buildSupplierRouter();
+  const resolvedAuthRouter = authRouter || buildAuthRouter();
+  const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
+
   app.use(cors());
   app.use(express.json());
   app.use(rateLimit());
   app.use(express.static(path.join(__dirname, '..', 'public')));
 
-  app.use('/api/items', itemRouter || buildItemRouter());
-  app.use('/api/suppliers', supplierRouter || buildSupplierRouter());
-  app.use('/api/auth', authRouter || buildAuthRouter());
-  app.use('/api', coreDataRouter || buildCoreDataRouter());
+  ['/api/items', '/api/products', '/items', '/products'].forEach((path) => {
+    app.use(path, resolvedItemRouter);
+  });
+  app.use('/api/suppliers', resolvedSupplierRouter);
+  app.use('/api/auth', resolvedAuthRouter);
+  app.use('/api', resolvedCoreDataRouter);
 
   app.get('/docs/swagger.json', (_, res) => {
     res.type('application/json').send(swaggerDocument);

@@ -156,6 +156,56 @@ paths:
           description: Permissão insuficiente
         '409':
           description: Código duplicado
+  /api/products:
+    get:
+      summary: Lista produtos cadastrados (alias de /api/items)
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Produtos retornados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Cadastra novo produto (alias de /api/items)
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para perfis Admin e Gestor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+      responses:
+        '201':
+          description: Produto criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '409':
+          description: Código duplicado
   /api/suppliers:
     get:
       summary: Lista fornecedores cadastrados
@@ -344,6 +394,59 @@ paths:
           description: Permissão insuficiente
     post:
       summary: Cadastra matéria-prima
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      description: Registra uma matéria-prima com informações de custo, validade e características.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MateriaPrimaInput'
+      responses:
+        '201':
+          description: Matéria-prima criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MateriaPrimaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/materials:
+    get:
+      summary: Lista matérias-primas (alias de /api/raw-materials)
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Materiais retornados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  materials:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/MateriaPrimaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+    post:
+      summary: Cadastra matéria-prima (alias de /api/raw-materials)
       tags: [Matérias-primas]
       security:
         - bearerAuth: []
