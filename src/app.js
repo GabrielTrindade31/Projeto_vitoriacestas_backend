@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
+const multer = require('multer');
 
 const buildItemRouter = require('./routes/items');
 const buildSupplierRouter = require('./routes/suppliers');
