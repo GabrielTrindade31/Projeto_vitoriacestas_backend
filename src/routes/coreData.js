@@ -68,7 +68,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.get('/raw-materials', auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
+  router.get(['/raw-materials', '/materials'], auth.authenticate, auth.authorizeRoles(readerRoles), async (_req, res) => {
     try {
       const materials = await service.listMaterials();
       return res.status(200).json({ materials });
@@ -78,7 +78,7 @@ function buildRouter(service = createCoreDataService(repository), auth = { authe
     }
   });
 
-  router.post('/raw-materials', auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
+  router.post(['/raw-materials', '/materials'], auth.authenticate, auth.authorizeRoles(writerRoles), async (req, res) => {
     try {
       const material = await service.createMaterial(req.body);
       return res.status(201).json({ message: 'Matéria-prima cadastrada com sucesso', material });
