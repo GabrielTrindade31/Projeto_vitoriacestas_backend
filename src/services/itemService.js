@@ -12,11 +12,23 @@ function buildItemSchema() {
   });
 }
 
+function normalizeSupplierId(payload) {
+  const fallback =
+    payload.fornecedorId ?? payload.fornecedor_id ?? payload.fornecedor ?? payload.fornecedorID ?? null;
+
+  if (fallback === undefined || fallback === null || fallback === '') return null;
+
+  const coerced = Number(fallback);
+  return Number.isNaN(coerced) ? null : coerced;
+}
+
 function createItemService(repository) {
   const schema = buildItemSchema();
 
   async function createItem(payload) {
-    const { error, value } = schema.validate(payload);
+    const normalized = { ...payload, fornecedorId: normalizeSupplierId(payload) };
+
+    const { error, value } = schema.validate(normalized, { abortEarly: false, allowUnknown: true });
     if (error) {
       const message = error.details.map((d) => d.message).join(', ');
       const validationError = new Error(message);
