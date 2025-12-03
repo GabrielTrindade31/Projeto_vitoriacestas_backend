@@ -1,18 +1,23 @@
 const pool = require('../db/pool');
 
 async function findByCode(code) {
-  const { rows } = await pool.query('SELECT * FROM produto WHERE codigo = $1 LIMIT 1', [code]);
+  const { rows } = await pool.query(
+    'SELECT id, codigo, nome, descricao, categoria, quantidade, preco, fornecedor_id AS "fornecedorId" FROM produto WHERE codigo = $1 LIMIT 1',
+    [code],
+  );
   return rows[0];
 }
 
 async function findAll() {
-  const { rows } = await pool.query('SELECT * FROM produto ORDER BY id DESC');
+  const { rows } = await pool.query(
+    'SELECT id, codigo, nome, descricao, categoria, quantidade, preco, fornecedor_id AS "fornecedorId" FROM produto ORDER BY id DESC',
+  );
   return rows;
 }
 
 async function create(item) {
   const query = `INSERT INTO produto (codigo, nome, descricao, categoria, quantidade, preco, fornecedor_id)
-    VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`;
+    VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, codigo, nome, descricao, categoria, quantidade, preco, fornecedor_id AS "fornecedorId"`;
   const values = [
     item.codigo,
     item.nome,
