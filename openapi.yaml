@@ -292,7 +292,7 @@ paths:
       tags: [Itens]
       security:
         - bearerAuth: []
-      description: Recebe um arquivo de imagem (campo `file`) e retorna metadados do upload. Alias disponível também em `/upload`.
+      description: Recebe um arquivo de imagem (campo `file`) e retorna metadados básicos do upload. Caso o nome não possa ser extraído do corpo multipart, o cabeçalho opcional `x-filename` será utilizado. Alias disponível também em `/upload`.
       requestBody:
         required: true
         content:
@@ -316,6 +316,7 @@ paths:
                     example: Upload recebido
                   filename:
                     type: string
+                    nullable: true
                   mimetype:
                     type: string
                   size:

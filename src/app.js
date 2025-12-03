@@ -14,15 +14,10 @@ const { rateLimit } = require('./middlewares/authentication');
 function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = {}) {
   const app = express();
   const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
-  const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 },
+  const uploadRaw = express.raw({
+    type: () => true,
+    limit: '10mb',
   });
-
-  const resolvedItemRouter = itemRouter || buildItemRouter();
-  const resolvedSupplierRouter = supplierRouter || buildSupplierRouter();
-  const resolvedAuthRouter = authRouter || buildAuthRouter();
-  const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
 
   const resolvedItemRouter = itemRouter || buildItemRouter();
   const resolvedSupplierRouter = supplierRouter || buildSupplierRouter();
@@ -47,16 +42,25 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
     app.use(path, resolvedCoreDataRouter);
   });
 
-  app.post(['/api/upload', '/upload'], upload.single('file'), (req, res) => {
-    if (!req.file) {
+  app.post(['/api/upload', '/upload'], uploadRaw, (req, res) => {
+    const body = req.body;
+    const hasBody = Buffer.isBuffer(body) ? body.length > 0 : Boolean(body);
+
+    if (!hasBody) {
       return res.status(400).json({ message: 'Nenhum arquivo enviado' });
     }
 
+    const size = Buffer.isBuffer(body) ? body.length : Buffer.byteLength(String(body));
+    const payloadAsString = Buffer.isBuffer(body) ? body.toString('latin1') : String(body);
+    const filenameMatch = payloadAsString.match(/filename="([^"]+)"/i);
+    const fallbackFilename = req.headers['x-filename'];
+    const filename = (filenameMatch && filenameMatch[1]) || (fallbackFilename ? String(fallbackFilename) : null);
+
     return res.status(201).json({
       message: 'Upload recebido',
-      filename: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
+      filename,
+      mimetype: req.headers['content-type'],
+      size,
     });
   });
 
