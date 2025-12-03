@@ -1,5 +1,38 @@
 const Joi = require('joi');
 
+function normalizeDate(input) {
+  if (input === undefined || input === null || input === '') return null;
+
+  if (input instanceof Date) return input.toISOString();
+
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    const parts = trimmed.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map((p) => Number(p));
+      if (!Number.isNaN(day) && !Number.isNaN(month) && !Number.isNaN(year)) {
+        const parsed = new Date(year, month - 1, day);
+        if (!Number.isNaN(parsed.valueOf())) {
+          return parsed.toISOString();
+        }
+      }
+    }
+
+    return trimmed;
+  }
+
+  return input;
+}
+
+function normalizeId(payload, camelKey, snakeKey) {
+  const raw = payload[camelKey] ?? payload[snakeKey];
+  if (raw === undefined || raw === null || raw === '') return null;
+  const num = Number(raw);
+  return Number.isNaN(num) ? null : num;
+}
+
 function buildSchemas() {
   return {
     address: Joi.object({
@@ -98,7 +131,13 @@ function createCoreDataService(repository) {
   }
 
   async function createCustomer(payload) {
-    const value = validate(schemas.customer, payload);
+    const normalized = {
+      ...payload,
+      enderecoId: normalizeId(payload, 'enderecoId', 'endereco_id'),
+      dataNascimento: normalizeDate(payload.dataNascimento ?? payload.data_nascimento ?? payload.data_nascimento),
+    };
+
+    const value = validate(schemas.customer, normalized);
 
     if (value.cpf) {
       const existingCpf = await repository.findCustomerByCpf(value.cpf);
@@ -126,7 +165,12 @@ function createCoreDataService(repository) {
   }
 
   async function createMaterial(payload) {
-    const value = validate(schemas.material, payload);
+    const normalized = {
+      ...payload,
+      dataValidade: normalizeDate(payload.dataValidade ?? payload.data_validade ?? payload.validade),
+    };
+
+    const value = validate(schemas.material, normalized);
     return repository.createMaterial(value);
   }
 
@@ -135,7 +179,14 @@ function createCoreDataService(repository) {
   }
 
   async function createMaterialDelivery(payload) {
-    const value = validate(schemas.materialDelivery, payload);
+    const normalized = {
+      ...payload,
+      materialId: normalizeId(payload, 'materialId', 'material_id'),
+      fornecedorId: normalizeId(payload, 'fornecedorId', 'fornecedor_id'),
+      dataEntrada: normalizeDate(payload.dataEntrada ?? payload.data_entrada),
+    };
+
+    const value = validate(schemas.materialDelivery, normalized);
     return repository.createMaterialDelivery(value);
   }
 
@@ -144,7 +195,13 @@ function createCoreDataService(repository) {
   }
 
   async function createManufacturing(payload) {
-    const value = validate(schemas.manufacturing, payload);
+    const normalized = {
+      ...payload,
+      produtoId: normalizeId(payload, 'produtoId', 'produto_id'),
+      materialId: normalizeId(payload, 'materialId', 'material_id'),
+    };
+
+    const value = validate(schemas.manufacturing, normalized);
     return repository.createManufacturing(value);
   }
 
@@ -153,7 +210,13 @@ function createCoreDataService(repository) {
   }
 
   async function createOrder(payload) {
-    const value = validate(schemas.order, payload);
+    const normalized = {
+      ...payload,
+      clienteId: normalizeId(payload, 'clienteId', 'cliente_id'),
+      dataPedido: normalizeDate(payload.dataPedido ?? payload.data_pedido),
+    };
+
+    const value = validate(schemas.order, normalized);
     return repository.createOrder(value);
   }
 
@@ -162,7 +225,14 @@ function createCoreDataService(repository) {
   }
 
   async function createShipment(payload) {
-    const value = validate(schemas.shipment, payload);
+    const normalized = {
+      ...payload,
+      pedidoId: normalizeId(payload, 'pedidoId', 'pedido_id'),
+      produtoId: normalizeId(payload, 'produtoId', 'produto_id'),
+      dataEnvio: normalizeDate(payload.dataEnvio ?? payload.data_envio),
+    };
+
+    const value = validate(schemas.shipment, normalized);
     return repository.createShipment(value);
   }
 
@@ -171,7 +241,13 @@ function createCoreDataService(repository) {
   }
 
   async function createFeedback(payload) {
-    const value = validate(schemas.feedback, payload);
+    const normalized = {
+      ...payload,
+      clienteId: normalizeId(payload, 'clienteId', 'cliente_id'),
+      data: normalizeDate(payload.data ?? payload.data_feedback),
+    };
+
+    const value = validate(schemas.feedback, normalized);
     return repository.createFeedback(value);
   }
 
@@ -180,7 +256,12 @@ function createCoreDataService(repository) {
   }
 
   async function createPhone(payload) {
-    const value = validate(schemas.phone, payload);
+    const normalized = {
+      ...payload,
+      clienteId: normalizeId(payload, 'clienteId', 'cliente_id'),
+    };
+
+    const value = validate(schemas.phone, normalized);
     return repository.createPhone(value);
   }
 
