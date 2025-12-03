@@ -24,6 +24,11 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const resolvedAuthRouter = authRouter || buildAuthRouter();
   const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
 
+  const resolvedItemRouter = itemRouter || buildItemRouter();
+  const resolvedSupplierRouter = supplierRouter || buildSupplierRouter();
+  const resolvedAuthRouter = authRouter || buildAuthRouter();
+  const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
+
   app.use(cors());
   app.use(express.json());
   app.use(rateLimit());
