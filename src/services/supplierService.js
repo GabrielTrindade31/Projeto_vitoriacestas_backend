@@ -7,7 +7,10 @@ function buildSupplierSchema() {
     razaoSocial: Joi.string().trim().required(),
     contato: Joi.string().trim().required(),
     email: Joi.string().trim().email({ tlds: false }).required(),
-    telefone: Joi.string().trim().pattern(/^(\(?\d{2}\)?\s?)?(9?\d{4}-?\d{4})$/).required(),
+    telefone: Joi.string()
+      .trim()
+      .pattern(/^\+?\d{0,3}[\s-]?(?:\(?\d{2,3}\)?[\s-]?)?\d{8,11}$/)
+      .required(),
     enderecoId: Joi.number().integer().allow(null),
   });
 }

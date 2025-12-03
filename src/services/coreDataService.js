@@ -62,6 +62,7 @@ function buildSchemas() {
       tamanho: Joi.string().trim().allow(null, ''),
       material: Joi.string().trim().allow(null, ''),
       acessorio: Joi.string().trim().allow(null, ''),
+      imagemUrl: Joi.string().trim().uri({ allowRelative: true }).allow(null, ''),
     }),
     manufacturing: Joi.object({
       produtoId: Joi.number().integer().required(),
