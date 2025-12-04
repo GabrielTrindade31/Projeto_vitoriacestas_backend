@@ -122,13 +122,49 @@ function createCoreDataService(repository) {
     return value;
   }
 
+  function normalizeIdOrThrow(raw, label) {
+    const coerced = Number(raw);
+    if (!Number.isInteger(coerced) || coerced <= 0) {
+      const validationError = new Error(`${label || 'ID'} inválido`);
+      validationError.status = 400;
+      throw validationError;
+    }
+    return coerced;
+  }
+
+  function ensureTerm(term) {
+    if (!term || !String(term).trim()) {
+      const validationError = new Error('Parâmetro de busca vazio');
+      validationError.status = 400;
+      throw validationError;
+    }
+    return String(term).trim();
+  }
+
   async function createAddress(payload) {
     const value = validate(schemas.address, payload);
     return repository.createAddress(value);
   }
 
+  async function updateAddress(id, payload) {
+    const addressId = normalizeIdOrThrow(id, 'Endereço');
+    const existing = await repository.findAddressById(addressId);
+    if (!existing) {
+      const notFound = new Error('Endereço não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const value = validate(schemas.address, payload);
+    return repository.updateAddress(addressId, value);
+  }
+
   async function listAddresses() {
     return repository.findAllAddresses();
+  }
+
+  async function searchAddresses(term) {
+    return repository.searchAddresses(ensureTerm(term));
   }
 
   async function createCustomer(payload) {
@@ -161,8 +197,50 @@ function createCoreDataService(repository) {
     return repository.createCustomer(value);
   }
 
+  async function updateCustomer(id, payload) {
+    const customerId = normalizeIdOrThrow(id, 'Cliente');
+    const existing = await repository.findCustomerById(customerId);
+    if (!existing) {
+      const notFound = new Error('Cliente não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      enderecoId: normalizeId(payload, 'enderecoId', 'endereco_id'),
+      dataNascimento: normalizeDate(payload.dataNascimento ?? payload.data_nascimento ?? payload.data_nascimento),
+    };
+
+    const value = validate(schemas.customer, normalized);
+
+    if (value.cpf) {
+      const existingCpf = await repository.findCustomerByCpf(value.cpf);
+      if (existingCpf && existingCpf.id !== customerId) {
+        const err = new Error('CPF já cadastrado');
+        err.status = 409;
+        throw err;
+      }
+    }
+
+    if (value.cnpj) {
+      const existingCnpj = await repository.findCustomerByCnpj(value.cnpj);
+      if (existingCnpj && existingCnpj.id !== customerId) {
+        const err = new Error('CNPJ já cadastrado');
+        err.status = 409;
+        throw err;
+      }
+    }
+
+    return repository.updateCustomer(customerId, value);
+  }
+
   async function listCustomers() {
     return repository.findAllCustomers();
+  }
+
+  async function searchCustomers(term) {
+    return repository.searchCustomers(ensureTerm(term));
   }
 
   async function createMaterial(payload) {
@@ -175,8 +253,29 @@ function createCoreDataService(repository) {
     return repository.createMaterial(value);
   }
 
+  async function updateMaterial(id, payload) {
+    const materialId = normalizeIdOrThrow(id, 'Matéria-prima');
+    const existing = await repository.findMaterialById(materialId);
+    if (!existing) {
+      const notFound = new Error('Matéria-prima não encontrada');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      dataValidade: normalizeDate(payload.dataValidade ?? payload.data_validade ?? payload.validade),
+    };
+    const value = validate(schemas.material, normalized);
+    return repository.updateMaterial(materialId, value);
+  }
+
   async function listMaterials() {
     return repository.findAllMaterials();
+  }
+
+  async function searchMaterials(term) {
+    return repository.searchMaterials(ensureTerm(term));
   }
 
   async function createMaterialDelivery(payload) {
@@ -191,8 +290,32 @@ function createCoreDataService(repository) {
     return repository.createMaterialDelivery(value);
   }
 
+  async function updateMaterialDelivery(id, payload) {
+    const deliveryId = normalizeIdOrThrow(id, 'Entrega de material');
+    const existing = await repository.findMaterialDeliveryById(deliveryId);
+    if (!existing) {
+      const notFound = new Error('Entrega de material não encontrada');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      materialId: normalizeId(payload, 'materialId', 'material_id'),
+      fornecedorId: normalizeId(payload, 'fornecedorId', 'fornecedor_id'),
+      dataEntrada: normalizeDate(payload.dataEntrada ?? payload.data_entrada),
+    };
+
+    const value = validate(schemas.materialDelivery, normalized);
+    return repository.updateMaterialDelivery(deliveryId, value);
+  }
+
   async function listMaterialDeliveries() {
     return repository.findAllMaterialDeliveries();
+  }
+
+  async function searchMaterialDeliveries(term) {
+    return repository.searchMaterialDeliveries(ensureTerm(term));
   }
 
   async function createManufacturing(payload) {
@@ -206,8 +329,31 @@ function createCoreDataService(repository) {
     return repository.createManufacturing(value);
   }
 
+  async function updateManufacturing(id, payload) {
+    const manufacturingId = normalizeIdOrThrow(id, 'Manufatura');
+    const existing = await repository.findManufacturingById(manufacturingId);
+    if (!existing) {
+      const notFound = new Error('Manufatura não encontrada');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      produtoId: normalizeId(payload, 'produtoId', 'produto_id'),
+      materialId: normalizeId(payload, 'materialId', 'material_id'),
+    };
+
+    const value = validate(schemas.manufacturing, normalized);
+    return repository.updateManufacturing(manufacturingId, value);
+  }
+
   async function listManufacturing() {
     return repository.findAllManufacturing();
+  }
+
+  async function searchManufacturing(term) {
+    return repository.searchManufacturing(ensureTerm(term));
   }
 
   async function createOrder(payload) {
@@ -221,8 +367,31 @@ function createCoreDataService(repository) {
     return repository.createOrder(value);
   }
 
+  async function updateOrder(id, payload) {
+    const orderId = normalizeIdOrThrow(id, 'Pedido');
+    const existing = await repository.findOrderById(orderId);
+    if (!existing) {
+      const notFound = new Error('Pedido não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      clienteId: normalizeId(payload, 'clienteId', 'cliente_id'),
+      dataPedido: normalizeDate(payload.dataPedido ?? payload.data_pedido),
+    };
+
+    const value = validate(schemas.order, normalized);
+    return repository.updateOrder(orderId, value);
+  }
+
   async function listOrders() {
     return repository.findAllOrders();
+  }
+
+  async function searchOrders(term) {
+    return repository.searchOrders(ensureTerm(term));
   }
 
   async function createShipment(payload) {
@@ -237,8 +406,32 @@ function createCoreDataService(repository) {
     return repository.createShipment(value);
   }
 
+  async function updateShipment(id, payload) {
+    const shipmentId = normalizeIdOrThrow(id, 'Envio');
+    const existing = await repository.findShipmentById(shipmentId);
+    if (!existing) {
+      const notFound = new Error('Envio não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      pedidoId: normalizeId(payload, 'pedidoId', 'pedido_id'),
+      produtoId: normalizeId(payload, 'produtoId', 'produto_id'),
+      dataEnvio: normalizeDate(payload.dataEnvio ?? payload.data_envio),
+    };
+
+    const value = validate(schemas.shipment, normalized);
+    return repository.updateShipment(shipmentId, value);
+  }
+
   async function listShipments() {
     return repository.findAllShipments();
+  }
+
+  async function searchShipments(term) {
+    return repository.searchShipments(ensureTerm(term));
   }
 
   async function createFeedback(payload) {
@@ -252,8 +445,31 @@ function createCoreDataService(repository) {
     return repository.createFeedback(value);
   }
 
+  async function updateFeedback(id, payload) {
+    const feedbackId = normalizeIdOrThrow(id, 'Feedback');
+    const existing = await repository.findFeedbackById(feedbackId);
+    if (!existing) {
+      const notFound = new Error('Feedback não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      clienteId: normalizeId(payload, 'clienteId', 'cliente_id'),
+      data: normalizeDate(payload.data ?? payload.data_feedback),
+    };
+
+    const value = validate(schemas.feedback, normalized);
+    return repository.updateFeedback(feedbackId, value);
+  }
+
   async function listFeedbacks() {
     return repository.findAllFeedbacks();
+  }
+
+  async function searchFeedbacks(term) {
+    return repository.searchFeedbacks(ensureTerm(term));
   }
 
   async function createPhone(payload) {
@@ -266,29 +482,69 @@ function createCoreDataService(repository) {
     return repository.createPhone(value);
   }
 
+  async function updatePhone(id, payload) {
+    const phoneId = normalizeIdOrThrow(id, 'Telefone');
+    const existing = await repository.findPhoneById(phoneId);
+    if (!existing) {
+      const notFound = new Error('Telefone não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const normalized = {
+      ...payload,
+      clienteId: normalizeId(payload, 'clienteId', 'cliente_id'),
+    };
+
+    const value = validate(schemas.phone, normalized);
+    return repository.updatePhone(phoneId, value);
+  }
+
   async function listPhones() {
     return repository.findAllPhones();
   }
 
+  async function searchPhones(term) {
+    return repository.searchPhones(ensureTerm(term));
+  }
+
   return {
     createAddress,
+    updateAddress,
     listAddresses,
+    searchAddresses,
     createCustomer,
+    updateCustomer,
     listCustomers,
+    searchCustomers,
     createMaterial,
+    updateMaterial,
     listMaterials,
+    searchMaterials,
     createMaterialDelivery,
+    updateMaterialDelivery,
     listMaterialDeliveries,
+    searchMaterialDeliveries,
     createManufacturing,
+    updateManufacturing,
     listManufacturing,
+    searchManufacturing,
     createOrder,
+    updateOrder,
     listOrders,
+    searchOrders,
     createShipment,
+    updateShipment,
     listShipments,
+    searchShipments,
     createFeedback,
+    updateFeedback,
     listFeedbacks,
+    searchFeedbacks,
     createPhone,
+    updatePhone,
     listPhones,
+    searchPhones,
   };
 }
 

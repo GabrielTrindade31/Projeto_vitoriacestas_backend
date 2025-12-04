@@ -4,10 +4,15 @@ Rotas principais (todas começam com /api)
 - POST /auth/login -> autentica e retorna JWT (Authorization: Bearer <token>)
 - GET /items -> lista produtos cadastrados (Admin/Gestor/Operador, exige Authorization)
 - POST /items -> cria item. Campos aceitos: { codigo, nome, descricao?, categoria?, quantidade?, preco?, fornecedorId? }. Quantidade e preço assumem 0 quando ausentes ou enviados como null; fornecedorId pode ser null ou omitido.
+- GET /items/search?q=<termo> -> busca itens filtrando por código, nome, categoria ou descrição (Admin/Gestor/Operador)
+- GET /items/{id} -> busca um item específico pelo ID (Admin/Gestor/Operador)
+- PUT /items/{id} -> atualiza um item existente (Admin/Gestor). Mesmos campos do POST /items.
 - GET /suppliers -> lista fornecedores (Admin/Gestor/Operador, exige Authorization)
 - POST /suppliers -> cria fornecedor. Campos aceitos: { cnpj, razaoSocial, contato, email, telefone, enderecoId? }. enderecoId pode ser null ou omitido; demais campos aceitam string vazia/null apenas se a validação do front permitir.
 - GET /customers -> lista clientes (Admin/Gestor/Operador, exige Authorization)
 - POST /customers -> cria cliente. Campos aceitos: { nome, cpf?, cnpj?, email?, dataNascimento, enderecoId }. enderecoId é obrigatório e precisa apontar para um endereço existente; dataNascimento é obrigatória.
+- Endpoints de busca (GET /<resource>/search?q=...): addresses, customers, phones, raw-materials (alias materials), material-deliveries (alias entregas-material), manufacturing (alias manufaturas), orders (alias pedidos), product-shipments (alias envios), feedbacks (alias feedback). Todos requerem q não vazio e usam as mesmas roles de leitura das rotas originais.
+- Endpoints de atualização (PUT /<resource>/{id}): addresses, customers, phones, raw-materials (alias materials), material-deliveries (alias entregas-material), manufacturing (alias manufaturas), orders (alias pedidos), product-shipments (alias envios), feedbacks (alias feedback). Mesmos corpos de criação; exigem roles de escrita (Admin/Gestor).
 - GET /docs -> interface Swagger para testes rápidos (produção: /docs)
 - GET /health -> verificação de status
 
