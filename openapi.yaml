@@ -236,6 +236,106 @@ paths:
           description: Permissão insuficiente
         '409':
           description: Código duplicado
+  /api/items/search:
+    get:
+      summary: Busca itens pelo termo informado
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: "Disponível para Admin, Gestor e Operador. Filtra por código, nome, categoria ou descrição usando comparação parcial."
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Termo de busca (case-insensitive)
+      responses:
+        '200':
+          description: Itens encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '400':
+          description: Parâmetro de busca ausente ou inválido
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/items/{id}:
+    get:
+      summary: Busca item pelo ID
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do item
+      responses:
+        '200':
+          description: Item retornado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item:
+                    $ref: '#/components/schemas/Item'
+        '400':
+          description: ID inválido
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Item não encontrado
+    put:
+      summary: Atualiza um item existente
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para perfis Admin e Gestor.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do item a ser atualizado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+      responses:
+        '200':
+          description: Item atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Falha de validação ou ID inválido
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Item não encontrado
+        '409':
+          description: Código duplicado
   /api/products:
     get:
       summary: Lista produtos cadastrados (alias de /api/items)
@@ -284,6 +384,106 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+        '409':
+          description: Código duplicado
+  /api/products/search:
+    get:
+      summary: Busca produtos pelo termo informado (alias de /api/items/search)
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: "Disponível para Admin, Gestor e Operador. Filtra por código, nome, categoria ou descrição usando comparação parcial."
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Termo de busca (case-insensitive)
+      responses:
+        '200':
+          description: Produtos encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '400':
+          description: Parâmetro de busca ausente ou inválido
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/products/{id}:
+    get:
+      summary: Busca produto pelo ID (alias de /api/items/{id})
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do produto
+      responses:
+        '200':
+          description: Produto retornado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item:
+                    $ref: '#/components/schemas/Item'
+        '400':
+          description: ID inválido
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Produto não encontrado
+    put:
+      summary: Atualiza um produto existente (alias de /api/items/{id})
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para perfis Admin e Gestor.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do produto a ser atualizado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+      responses:
+        '200':
+          description: Produto atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Falha de validação ou ID inválido
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Produto não encontrado
         '409':
           description: Código duplicado
   /api/upload:
@@ -512,6 +712,78 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/addresses/search:
+    get:
+      summary: Busca endereços
+      tags: [Endereços]
+      security:
+        - bearerAuth: []
+      description: Pesquisa por rua, CEP ou número. Disponível para Admin, Gestor e Operador.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Termo de busca (rua, CEP ou número)
+      responses:
+        '200':
+          description: Endereços encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addresses:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EnderecoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/addresses/{id}:
+    put:
+      summary: Atualiza endereço
+      tags: [Endereços]
+      security:
+        - bearerAuth: []
+      description: Atualiza rua, CEP e número do endereço informado. Disponível para Admin e Gestor.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do endereço
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnderecoInput'
+      responses:
+        '200':
+          description: Endereço atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnderecoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Endereço não encontrado
   /api/customers:
     get:
       summary: Lista clientes cadastrados
@@ -567,6 +839,80 @@ paths:
           description: Permissão insuficiente
         '409':
           description: CPF ou CNPJ duplicado
+  /api/customers/search:
+    get:
+      summary: Busca clientes
+      tags: [Clientes]
+      security:
+        - bearerAuth: []
+      description: Pesquisa clientes por nome, email, CPF ou CNPJ. Disponível para Admin, Gestor e Operador.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Termo de busca (nome, email, CPF ou CNPJ)
+      responses:
+        '200':
+          description: Clientes encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ClienteInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/customers/{id}:
+    put:
+      summary: Atualiza cliente
+      tags: [Clientes]
+      security:
+        - bearerAuth: []
+      description: Atualiza dados do cliente (CPF/CNPJ, endereço e contato). Disponível para Admin e Gestor.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteInput'
+      responses:
+        '200':
+          description: Cliente atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Cliente não encontrado
+        '409':
+          description: CPF ou CNPJ duplicado
   /api/raw-materials:
     get:
       summary: Lista matérias-primas
@@ -620,6 +966,78 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/raw-materials/search:
+    get:
+      summary: Busca matérias-primas
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      description: Pesquisa por nome, tipo, material, acessório ou descrição. Disponível para Admin, Gestor e Operador.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Termo de busca
+      responses:
+        '200':
+          description: Materiais encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  materials:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/MateriaPrimaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/raw-materials/{id}:
+    put:
+      summary: Atualiza matéria-prima
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      description: Atualiza informações de uma matéria-prima. Disponível para Admin e Gestor.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID da matéria-prima
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MateriaPrimaInput'
+      responses:
+        '200':
+          description: Matéria-prima atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MateriaPrimaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Material não encontrado
   /api/materials:
     get:
       summary: Lista matérias-primas (alias de /api/raw-materials)
@@ -673,6 +1091,76 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/materials/search:
+    get:
+      summary: Busca matérias-primas (alias de /api/raw-materials/search)
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Termo de busca
+      responses:
+        '200':
+          description: Materiais encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  materials:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/MateriaPrimaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/materials/{id}:
+    put:
+      summary: Atualiza matéria-prima (alias de /api/raw-materials/{id})
+      tags: [Matérias-primas]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID da matéria-prima
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MateriaPrimaInput'
+      responses:
+        '200':
+          description: Matéria-prima atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MateriaPrimaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Material não encontrado
   /api/manufacturing:
     get:
       summary: Lista relações de manufatura
@@ -726,6 +1214,78 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/manufacturing/search:
+    get:
+      summary: Busca relações de manufatura
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      description: Pesquisa por produto ou matéria-prima envolvidos. Disponível para Admin, Gestor e Operador.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID do produto, material ou texto para busca
+      responses:
+        '200':
+          description: Relações encontradas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  manufacturing:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ManufaturaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/manufacturing/{id}:
+    put:
+      summary: Atualiza relação de manufatura
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      description: Atualiza vínculo entre produto e matéria-prima. Disponível para Admin e Gestor.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID da relação de manufatura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufaturaInput'
+      responses:
+        '200':
+          description: Relação de manufatura atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufaturaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Relação não encontrada
   /api/manufaturas:
     get:
       summary: Lista relações de manufatura (alias)
@@ -779,6 +1339,76 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/manufaturas/search:
+    get:
+      summary: Busca relações de manufatura (alias de /api/manufacturing/search)
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID ou termo de busca
+      responses:
+        '200':
+          description: Relações encontradas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  manufacturing:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ManufaturaInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/manufaturas/{id}:
+    put:
+      summary: Atualiza relação de manufatura (alias de /api/manufacturing/{id})
+      tags: [Manufatura]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID da relação de manufatura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufaturaInput'
+      responses:
+        '200':
+          description: Relação de manufatura atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufaturaResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Relação não encontrada
   /api/material-deliveries:
     get:
       summary: Lista entradas de matéria-prima
@@ -1256,6 +1886,636 @@ paths:
           description: Token ausente ou inválido
         '403':
           description: Permissão insuficiente
+  /api/material-deliveries/search:
+    get:
+      summary: Busca entradas de matéria-prima
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID de material, fornecedor ou termo relacionado
+      responses:
+        '200':
+          description: Entradas encontradas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EntregaMaterialInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/material-deliveries/{id}:
+    put:
+      summary: Atualiza entrada de matéria-prima
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID da entrada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntregaMaterialInput'
+      responses:
+        '200':
+          description: Entrada atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntregaMaterialResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Entrada não encontrada
+  /api/entregas-material/search:
+    get:
+      summary: Busca entradas de matéria-prima (alias)
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID de material, fornecedor ou termo relacionado
+      responses:
+        '200':
+          description: Entradas encontradas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EntregaMaterialInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/entregas-material/{id}:
+    put:
+      summary: Atualiza entrada de matéria-prima (alias)
+      tags: [Entregas de Material]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID da entrada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntregaMaterialInput'
+      responses:
+        '200':
+          description: Entrada atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntregaMaterialResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Entrada não encontrada
+  /api/orders/search:
+    get:
+      summary: Busca pedidos
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID de cliente ou termos de pedido
+      responses:
+        '200':
+          description: Pedidos encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/PedidoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/orders/{id}:
+    put:
+      summary: Atualiza pedido
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do pedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+      responses:
+        '200':
+          description: Pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Pedido não encontrado
+  /api/pedidos/search:
+    get:
+      summary: Busca pedidos (alias)
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID de cliente ou termos de pedido
+      responses:
+        '200':
+          description: Pedidos encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/PedidoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/pedidos/{id}:
+    put:
+      summary: Atualiza pedido (alias)
+      tags: [Pedidos]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do pedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoInput'
+      responses:
+        '200':
+          description: Pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Pedido não encontrado
+  /api/product-shipments/search:
+    get:
+      summary: Busca envios de produto
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID de pedido/produto ou termo de envio
+      responses:
+        '200':
+          description: Envios encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shipments:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EnvioProdutoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/product-shipments/{id}:
+    put:
+      summary: Atualiza envio de produto
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do envio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvioProdutoInput'
+      responses:
+        '200':
+          description: Envio atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioProdutoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Envio não encontrado
+  /api/envios/search:
+    get:
+      summary: Busca envios de produto (alias)
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: ID de pedido/produto ou termo de envio
+      responses:
+        '200':
+          description: Envios encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shipments:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EnvioProdutoInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/envios/{id}:
+    put:
+      summary: Atualiza envio de produto (alias)
+      tags: [Envios]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do envio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvioProdutoInput'
+      responses:
+        '200':
+          description: Envio atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioProdutoResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Envio não encontrado
+  /api/feedbacks/search:
+    get:
+      summary: Busca feedbacks
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Termo, contato ou ID de cliente
+      responses:
+        '200':
+          description: Feedbacks encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feedbacks:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/FeedbackInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/feedbacks/{id}:
+    put:
+      summary: Atualiza feedback
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackInput'
+      responses:
+        '200':
+          description: Feedback atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Feedback não encontrado
+  /api/feedback/search:
+    get:
+      summary: Busca feedbacks (alias)
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Termo, contato ou ID de cliente
+      responses:
+        '200':
+          description: Feedbacks encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feedbacks:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/FeedbackInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/feedback/{id}:
+    put:
+      summary: Atualiza feedback (alias)
+      tags: [Feedbacks]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackInput'
+      responses:
+        '200':
+          description: Feedback atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Feedback não encontrado
+  /api/phones/search:
+    get:
+      summary: Busca telefones
+      tags: [Telefones]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: DDD, número ou ID do cliente
+      responses:
+        '200':
+          description: Telefones encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  phones:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/TelefoneInput'
+                        - type: object
+                          properties:
+                            id:
+                              type: integer
+        '400':
+          description: Parâmetro de busca vazio
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+  /api/phones/{id}:
+    put:
+      summary: Atualiza telefone
+      tags: [Telefones]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do telefone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelefoneInput'
+      responses:
+        '200':
+          description: Telefone atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelefoneResponse'
+        '400':
+          description: Falha de validação
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
+        '404':
+          description: Telefone não encontrado
 components:
   securitySchemes:
     bearerAuth:
