@@ -13,6 +13,28 @@ Rotas principais (todas começam com /api)
 - POST /customers -> cria cliente. Campos aceitos: { nome, cpf?, cnpj?, email?, dataNascimento, enderecoId }. enderecoId é obrigatório e precisa apontar para um endereço existente; dataNascimento é obrigatória.
 - Endpoints de busca (GET /<resource>/search?q=...): addresses, customers, phones, raw-materials (alias materials), material-deliveries (alias entregas-material), manufacturing (alias manufaturas), orders (alias pedidos), product-shipments (alias envios), feedbacks (alias feedback). Todos requerem q não vazio e usam as mesmas roles de leitura das rotas originais.
 - Endpoints de atualização (PUT /<resource>/{id}): addresses, customers, phones, raw-materials (alias materials), material-deliveries (alias entregas-material), manufacturing (alias manufaturas), orders (alias pedidos), product-shipments (alias envios), feedbacks (alias feedback). Mesmos corpos de criação; exigem roles de escrita (Admin/Gestor).
+- Lista completa dos novos endpoints de busca (GET):
+  - /api/items/search
+  - /api/addresses/search
+  - /api/customers/search
+  - /api/phones/search
+  - /api/raw-materials/search e /api/materials/search (alias)
+  - /api/material-deliveries/search e /api/entregas-material/search (alias)
+  - /api/manufacturing/search e /api/manufaturas/search (alias)
+  - /api/orders/search e /api/pedidos/search (alias)
+  - /api/product-shipments/search e /api/envios/search (alias)
+  - /api/feedbacks/search e /api/feedback/search (alias)
+- Lista completa dos novos endpoints de atualização (PUT):
+  - /api/items/{id}
+  - /api/addresses/{id}
+  - /api/customers/{id}
+  - /api/phones/{id}
+  - /api/raw-materials/{id} e /api/materials/{id} (alias)
+  - /api/material-deliveries/{id} e /api/entregas-material/{id} (alias)
+  - /api/manufacturing/{id} e /api/manufaturas/{id} (alias)
+  - /api/orders/{id} e /api/pedidos/{id} (alias)
+  - /api/product-shipments/{id} e /api/envios/{id} (alias)
+  - /api/feedbacks/{id} e /api/feedback/{id} (alias)
 - GET /docs -> interface Swagger para testes rápidos (produção: /docs)
 - GET /health -> verificação de status
 
