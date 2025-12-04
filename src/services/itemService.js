@@ -25,7 +25,7 @@ function normalizeSupplierId(payload) {
 function createItemService(repository) {
   const schema = buildItemSchema();
 
-  async function createItem(payload) {
+  function validateAndNormalize(payload) {
     const normalized = { ...payload, fornecedorId: normalizeSupplierId(payload) };
 
     const { error, value } = schema.validate(normalized, { abortEarly: false, allowUnknown: true });
@@ -35,6 +35,12 @@ function createItemService(repository) {
       validationError.status = 400;
       throw validationError;
     }
+
+    return value;
+  }
+
+  async function createItem(payload) {
+    const value = validateAndNormalize(payload);
 
     const existing = await repository.findByCode(value.codigo);
     if (existing) {
@@ -51,7 +57,47 @@ function createItemService(repository) {
     return repository.findAll();
   }
 
-  return { createItem, listItems };
+  async function getItemById(id) {
+    const item = await repository.findById(id);
+    if (!item) {
+      const notFound = new Error('Item não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+    return item;
+  }
+
+  async function updateItem(id, payload) {
+    const value = validateAndNormalize(payload);
+
+    const existing = await repository.findById(id);
+    if (!existing) {
+      const notFound = new Error('Item não encontrado');
+      notFound.status = 404;
+      throw notFound;
+    }
+
+    const duplicatedCode = await repository.findByCode(value.codigo);
+    if (duplicatedCode && duplicatedCode.id !== id) {
+      const duplicateError = new Error('Código já cadastrado');
+      duplicateError.status = 409;
+      throw duplicateError;
+    }
+
+    return repository.update(id, value);
+  }
+
+  async function searchItems(term) {
+    if (!term || !String(term).trim()) {
+      const validationError = new Error('Parâmetro de busca vazio');
+      validationError.status = 400;
+      throw validationError;
+    }
+
+    return repository.search(String(term).trim());
+  }
+
+  return { createItem, listItems, getItemById, updateItem, searchItems };
 }
 
 module.exports = { createItemService };
