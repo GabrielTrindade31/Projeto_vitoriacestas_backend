@@ -18,6 +18,16 @@ function buildRouter(service = createItemService(repository), auth = { authentic
     }
   });
 
+  router.get('/images', auth.authenticate, auth.authorizeRoles(readerRoles), async (req, res) => {
+    try {
+      const images = await service.listItemImages();
+      return res.status(200).json({ images });
+    } catch (error) {
+      const status = error.status || 500;
+      return res.status(status).json({ message: error.message || 'Erro interno' });
+    }
+  });
+
   router.get('/search', auth.authenticate, auth.authorizeRoles(readerRoles), async (req, res) => {
     try {
       const term = req.query.q;

@@ -9,6 +9,7 @@ function buildItemSchema() {
     quantidade: Joi.number().integer().min(0).required(),
     preco: Joi.number().precision(2).min(0).required(),
     fornecedorId: Joi.number().integer().allow(null),
+    imagemUrl: Joi.string().trim().uri({ allowRelative: true }).allow(null, ''),
   });
 }
 
@@ -22,11 +23,35 @@ function normalizeSupplierId(payload) {
   return Number.isNaN(coerced) ? null : coerced;
 }
 
+function normalizeImageUrl(raw) {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    return trimmed || null;
+  }
+
+  return String(raw);
+}
+
+function hasImagePayload(payload) {
+  return (
+    Object.prototype.hasOwnProperty.call(payload, 'imagemUrl') ||
+    Object.prototype.hasOwnProperty.call(payload, 'imagem_url') ||
+    Object.prototype.hasOwnProperty.call(payload, 'imageUrl')
+  );
+}
+
 function createItemService(repository) {
   const schema = buildItemSchema();
 
   function validateAndNormalize(payload) {
-    const normalized = { ...payload, fornecedorId: normalizeSupplierId(payload) };
+    const normalized = {
+      ...payload,
+      fornecedorId: normalizeSupplierId(payload),
+      imagemUrl: normalizeImageUrl(payload.imagemUrl ?? payload.imagem_url ?? payload.imageUrl),
+    };
 
     const { error, value } = schema.validate(normalized, { abortEarly: false, allowUnknown: true });
     if (error) {
@@ -41,6 +66,7 @@ function createItemService(repository) {
 
   async function createItem(payload) {
     const value = validateAndNormalize(payload);
+    const wantsImageUpdate = hasImagePayload(payload);
 
     const existing = await repository.findByCode(value.codigo);
     if (existing) {
@@ -50,7 +76,16 @@ function createItemService(repository) {
     }
 
     const created = await repository.create(value);
-    return created;
+
+    if (wantsImageUpdate) {
+      if (value.imagemUrl) {
+        await repository.upsertImage(created.id, value.imagemUrl);
+      } else {
+        await repository.deleteImageByProductId(created.id);
+      }
+    }
+
+    return repository.findById(created.id);
   }
 
   async function listItems() {
@@ -69,6 +104,7 @@ function createItemService(repository) {
 
   async function updateItem(id, payload) {
     const value = validateAndNormalize(payload);
+    const wantsImageUpdate = hasImagePayload(payload);
 
     const existing = await repository.findById(id);
     if (!existing) {
@@ -84,7 +120,17 @@ function createItemService(repository) {
       throw duplicateError;
     }
 
-    return repository.update(id, value);
+    await repository.update(id, value);
+
+    if (wantsImageUpdate) {
+      if (value.imagemUrl) {
+        await repository.upsertImage(id, value.imagemUrl);
+      } else {
+        await repository.deleteImageByProductId(id);
+      }
+    }
+
+    return repository.findById(id);
   }
 
   async function searchItems(term) {
@@ -97,7 +143,11 @@ function createItemService(repository) {
     return repository.search(String(term).trim());
   }
 
-  return { createItem, listItems, getItemById, updateItem, searchItems };
+  async function listItemImages() {
+    return repository.findAllImages();
+  }
+
+  return { createItem, listItems, getItemById, updateItem, searchItems, listItemImages };
 }
 
 module.exports = { createItemService };
