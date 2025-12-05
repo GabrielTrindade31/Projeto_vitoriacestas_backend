@@ -4,9 +4,19 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 
 ## Configuração
 1. Duplique `.env.example` para `.env` e informe `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `JWT_SECRET`.
-2. Instale dependências com `npm install`.
-3. Rode a aplicação com `npm start` (porta padrão 3000).
-4. Acesse `/docs` para documentação Swagger e `/` para o formulário de cadastro de itens.
+2. Configure as credenciais do Redis serverless (Upstash) com as variáveis `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`.
+3. Opcional: ajuste o TTL do cache de imagens via `IMAGE_CACHE_TTL_SECONDS` (padrão 1800 segundos = 30 minutos) e defina `BLOB_READ_WRITE_TOKEN` para publicar as imagens no Vercel Blob (o arquivo fica salvo no Blob e o Redis mantém a cópia em memória/base64 com a URL pública guardada).
+4. Instale dependências com `npm install`.
+5. Rode a aplicação com `npm start` (porta padrão 3000).
+6. Acesse `/docs` para documentação Swagger e `/` para o formulário de cadastro de itens.
+
+### Cache e upload de imagens
+- Todas as imagens servidas do diretório `public/` passam pela camada de cache Redis antes de serem lidas do disco, incluindo entradas que foram previamente armazenadas como **URL absoluta**, **data URL** ou **base64 bruto** (todas as variantes são reidratadas e devolvidas com o `Content-Type` correto).
+- Quando `BLOB_READ_WRITE_TOKEN` estiver definido, as imagens ausentes no cache serão enviadas automaticamente para o **Vercel Blob** com `access: public`. O arquivo fica persistido no Blob, e o Redis salva **tanto a URL pública quanto uma cópia base64** para servir diretamente da memória nas próximas requisições (evita ter que reprocessar ou reler do disco / Blob).
+- A chave segue o padrão `image:public:<caminho-da-imagem>` (ex.: `image:public:logo.png`).
+- Cada entrada expira conforme `IMAGE_CACHE_TTL_SECONDS` (ou 30 minutos por padrão) para evitar dados desatualizados.
+- O Upstash é um banco chave-valor (não há tabelas a criar). Para depurar, use o painel do Upstash ou o console/CLI executando `redis.get("image:public:seu/arquivo.png")` e verificando se o valor base64 ou URL foi persistido com o content-type correspondente.
+- O endpoint `POST /api/upload` (alias `/upload`) agora recebe `multipart/form-data` com o campo `file`, salva o arquivo em `public/uploads/`, publica no Blob (quando configurado) e grava a entrada de cache `image:public:uploads/<arquivo>` contendo a URL pública e o base64. A resposta retorna tanto `url` (Blob ou `/uploads/...`) quanto a `cacheKey` usada no Redis, além do `cacheTtlSeconds` aplicado e de um flag `blobConfigured` indicando se o token foi detectado.
 
 ### Login e usuários padrão
 - O login já vem pré-carregado em memória (não depende do banco) com os perfis abaixo. Use-os no Swagger/`curl` ou sobrescreva via variáveis de ambiente (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `MANAGER_PASSWORD`, `OPERATOR_PASSWORD` etc.):
