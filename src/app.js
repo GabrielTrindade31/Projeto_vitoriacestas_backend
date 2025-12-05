@@ -91,38 +91,11 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
 
       await fs.writeFile(absolutePath, file.buffer);
 
-      const blobConfigured = isBlobConfigured();
-      let blobUrl = null;
-      let blobDownloadUrl = null;
-      let blobUploadTimedOut = false;
-      if (blobConfigured) {
-        try {
-          const blob = await withTimeout(
-            uploadImageToBlob(relativePath, file.buffer, contentType),
-            blobUploadTimeoutMs,
-            null,
-            'blob upload'
-          );
-          blobUrl = blob?.url || null;
-          blobDownloadUrl = blob?.downloadUrl || null;
-          if (!blobUrl) {
-            blobUploadTimedOut = true;
-            console.warn('Blob upload did not return a URL; check token and connectivity');
-          }
-        } catch (error) {
-          console.error('Erro ao salvar imagem no Blob', error);
-        }
-      }
-
       const cachePayload = {
         contentType,
         data: file.buffer.toString('base64'),
+        publicUrl: `/${relativePath}`,
       };
-
-      if (blobUrl) {
-        cachePayload.url = blobUrl;
-        cachePayload.downloadUrl = blobDownloadUrl;
-      }
 
       const cacheKey = `image:public:${relativePath}`;
 
@@ -138,20 +111,44 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
       }
 
       const publicUrl = `/${relativePath}`;
+      const blobConfigured = isBlobConfigured();
+
+      if (blobConfigured) {
+        (async () => {
+          try {
+            const blob = await withTimeout(
+              uploadImageToBlob(relativePath, file.buffer, contentType),
+              blobUploadTimeoutMs,
+              null,
+              'blob upload'
+            );
+
+            if (blob?.url) {
+              const enrichedCache = {
+                ...cachePayload,
+                url: blob.url,
+                downloadUrl: blob.downloadUrl,
+              };
+
+              await redis.set(cacheKey, enrichedCache, { ex: DEFAULT_TTL_SECONDS });
+            }
+          } catch (error) {
+            console.error('Erro ao salvar imagem no Blob', error);
+          }
+        })();
+      }
 
       return res.status(201).json({
         message: 'Upload salvo com sucesso',
         filename,
         mimetype: contentType,
         size: file.size,
-        url: blobUrl || publicUrl,
-        blobUrl,
-        blobDownloadUrl,
-        blobUploadTimedOut,
+        url: publicUrl,
         publicUrl,
         cacheKey,
         cacheTtlSeconds: DEFAULT_TTL_SECONDS,
         blobConfigured,
+        blobUploadQueued: blobConfigured,
       });
     } catch (error) {
       console.error('Erro ao processar upload', error);
