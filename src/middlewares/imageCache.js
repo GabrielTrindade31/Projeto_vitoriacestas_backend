@@ -1,6 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const mime = require('mime-types');
+const { uploadImageToBlob, isBlobConfigured } = require('../services/blobStorage');
 
 const DEFAULT_TTL_SECONDS = Number(process.env.IMAGE_CACHE_TTL_SECONDS || 1800);
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp']);
@@ -52,6 +53,15 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
       const cached = await redis.get(cacheKey);
       if (cached) {
         const hydrated = typeof cached === 'string' ? cached : cached;
+        const contentType = hydrated.contentType || mime.lookup(ext) || 'application/octet-stream';
+        const dataCandidate =
+          hydrated?.data || hydrated?.buffer || (isHttpUrl(hydrated) || isDataUrl(hydrated) ? null : hydrated);
+        const buffer = toBuffer(dataCandidate);
+
+        if (buffer) {
+          res.set('Content-Type', contentType);
+          return res.send(buffer);
+        }
 
         // Redirect when the cached value is an absolute URL
         if (isHttpUrl(hydrated?.url || hydrated)) {
@@ -60,16 +70,8 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
 
         // Decode data URL values transparently
         if (isDataUrl(hydrated?.url || hydrated)) {
-          const { contentType, buffer } = parseDataUrl(hydrated.url || hydrated);
-          res.set('Content-Type', contentType);
-          return res.send(buffer);
-        }
-
-        const contentType = hydrated.contentType || mime.lookup(ext) || 'application/octet-stream';
-        const buffer = toBuffer(hydrated.data || hydrated.buffer || hydrated);
-
-        if (buffer) {
-          res.set('Content-Type', contentType);
+          const { contentType: hydratedContentType, buffer } = parseDataUrl(hydrated.url || hydrated);
+          res.set('Content-Type', hydratedContentType);
           return res.send(buffer);
         }
       }
@@ -81,9 +83,29 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
       const absolutePath = path.join(rootFolder, relativePath);
       const buffer = await fs.readFile(absolutePath);
       const contentType = mime.lookup(absolutePath) || 'application/octet-stream';
+      let cachePayload;
+
+      if (isBlobConfigured()) {
+        try {
+          const blob = await uploadImageToBlob(relativePath, buffer, contentType);
+          if (blob?.url) {
+            cachePayload = { url: blob.url, contentType };
+          }
+        } catch (error) {
+          console.error('Erro ao salvar imagem no Blob', error);
+        }
+      }
+
+      if (!cachePayload) {
+        cachePayload = { contentType };
+      }
+
+      // Always keep a memory-friendly payload in Redis so the next request
+      // is served directly from cache even when Blob is enabled
+      cachePayload.data = buffer.toString('base64');
 
       try {
-        await redis.set(cacheKey, { contentType, data: buffer.toString('base64') }, { ex: ttlSeconds });
+        await redis.set(cacheKey, cachePayload, { ex: ttlSeconds });
       } catch (error) {
         console.error('Erro ao salvar imagem no cache', error);
       }
