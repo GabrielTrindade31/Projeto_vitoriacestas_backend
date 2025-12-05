@@ -15,6 +15,19 @@ const { createImageCacheMiddleware, DEFAULT_TTL_SECONDS } = require('./middlewar
 const { getRedisClient } = require('./services/redisClient');
 const { uploadImageToBlob, isBlobConfigured } = require('./services/blobStorage');
 
+function withTimeout(promise, ms, onTimeoutValue = null, label = 'operation') {
+  let timeoutId;
+
+  const timer = new Promise((resolve) => {
+    timeoutId = setTimeout(() => {
+      console.warn(`${label} timed out after ${ms}ms`);
+      resolve(onTimeoutValue);
+    }, ms);
+  });
+
+  return Promise.race([promise.finally(() => clearTimeout(timeoutId)), timer]);
+}
+
 function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = {}) {
   const app = express();
   const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
@@ -28,6 +41,8 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const resolvedAuthRouter = authRouter || buildAuthRouter();
   const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
   const redis = getRedisClient();
+  const blobUploadTimeoutMs = Number(process.env.BLOB_UPLOAD_TIMEOUT_MS || 30000);
+  const cacheWriteTimeoutMs = Number(process.env.REDIS_CACHE_WRITE_TIMEOUT_MS || 5000);
 
   app.use(cors());
   app.use(express.json());
@@ -118,11 +133,8 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
       const cachePayload = {
         contentType,
         data: file.buffer.toString('base64'),
+        publicUrl: `/${relativePath}`,
       };
-
-      if (blobUrl) {
-        cachePayload.url = blobUrl;
-      }
 
       const cacheKey = `image:public:${relativePath}`;
 
@@ -142,14 +154,39 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
       }
 
       const publicUrl = `/${relativePath}`;
+      const blobConfigured = isBlobConfigured();
+
+      if (blobConfigured) {
+        (async () => {
+          try {
+            const blob = await withTimeout(
+              uploadImageToBlob(relativePath, file.buffer, contentType),
+              blobUploadTimeoutMs,
+              null,
+              'blob upload'
+            );
+
+            if (blob?.url) {
+              const enrichedCache = {
+                ...cachePayload,
+                url: blob.url,
+                downloadUrl: blob.downloadUrl,
+              };
+
+              await redis.set(cacheKey, enrichedCache, { ex: DEFAULT_TTL_SECONDS });
+            }
+          } catch (error) {
+            console.error('Erro ao salvar imagem no Blob', error);
+          }
+        })();
+      }
 
       return res.status(201).json({
         message: 'Upload salvo com sucesso',
         filename,
         mimetype: contentType,
         size: file.size,
-        url: blobUrl || publicUrl,
-        blobUrl,
+        url: publicUrl,
         publicUrl,
         cacheKey,
         cacheTtlSeconds: DEFAULT_TTL_SECONDS,
