@@ -68,6 +68,24 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
     app.use(path, resolvedCoreDataRouter);
   });
 
+  const withTimeout = (promise, timeoutMs, onTimeoutValue = null) => {
+    let timeoutHandle;
+    const timer = new Promise((resolve, reject) => {
+      timeoutHandle = setTimeout(() => {
+        const error = new Error('Operation timed out');
+        error.code = 'TIMEOUT';
+        reject(error);
+      }, timeoutMs);
+    });
+
+    return Promise.race([promise.finally(() => clearTimeout(timeoutHandle)), timer]).catch((error) => {
+      if (error && error.code === 'TIMEOUT') {
+        return onTimeoutValue;
+      }
+      throw error;
+    });
+  };
+
   app.post(['/api/upload', '/upload'], uploadMemory.single('file'), async (req, res, next) => {
     try {
       const file = req.file;
@@ -91,6 +109,27 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
 
       await fs.writeFile(absolutePath, file.buffer);
 
+      const blobConfigured = isBlobConfigured();
+      let blobUrl = null;
+      let blobTimedOut = false;
+      if (blobConfigured) {
+        try {
+          const blob = await withTimeout(
+            uploadImageToBlob(relativePath, file.buffer, contentType),
+            Number(process.env.BLOB_UPLOAD_TIMEOUT_MS || 10000),
+            'timeout'
+          );
+
+          if (blob === 'timeout') {
+            blobTimedOut = true;
+          } else {
+            blobUrl = blob?.url || null;
+          }
+        } catch (error) {
+          console.error('Erro ao salvar imagem no Blob', error);
+        }
+      }
+
       const cachePayload = {
         contentType,
         data: file.buffer.toString('base64'),
@@ -99,13 +138,17 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
 
       const cacheKey = `image:public:${relativePath}`;
 
+      let cacheTimedOut = false;
       try {
-        await withTimeout(
+        const cacheResult = await withTimeout(
           redis.set(cacheKey, cachePayload, { ex: DEFAULT_TTL_SECONDS }),
-          cacheWriteTimeoutMs,
-          null,
-          'redis cache write'
+          Number(process.env.REDIS_CACHE_TIMEOUT_MS || 5000),
+          'timeout'
         );
+
+        if (cacheResult === 'timeout') {
+          cacheTimedOut = true;
+        }
       } catch (error) {
         console.error('Erro ao salvar imagem no cache', error);
       }
@@ -148,7 +191,8 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
         cacheKey,
         cacheTtlSeconds: DEFAULT_TTL_SECONDS,
         blobConfigured,
-        blobUploadQueued: blobConfigured,
+        blobTimedOut,
+        cacheTimedOut,
       });
     } catch (error) {
       console.error('Erro ao processar upload', error);

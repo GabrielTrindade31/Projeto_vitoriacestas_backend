@@ -541,6 +541,14 @@ paths:
                     type: boolean
                     example: true
                     description: Indica se o token BLOB_READ_WRITE_TOKEN estava definido no momento do upload
+                  blobTimedOut:
+                    type: boolean
+                    example: false
+                    description: Indica se a publicação no Blob excedeu o tempo limite (padrão 10s) e foi ignorada
+                  cacheTimedOut:
+                    type: boolean
+                    example: false
+                    description: Indica se a gravação no Redis excedeu o tempo limite (padrão 5s) e foi ignorada
         '400':
           description: Nenhum arquivo foi enviado
         '500':
