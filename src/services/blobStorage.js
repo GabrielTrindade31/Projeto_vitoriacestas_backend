@@ -1,7 +1,15 @@
 let putPromise;
 
+function getBlobToken() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (typeof token !== 'string' || token.trim() === '') {
+    return null;
+  }
+  return token.trim();
+}
+
 function isBlobConfigured() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(getBlobToken());
 }
 
 async function getPut() {
@@ -21,10 +29,12 @@ async function uploadImageToBlob(relativePath, buffer, contentType) {
   return put(objectKey, buffer, {
     access: 'public',
     contentType,
+    token: getBlobToken(),
   });
 }
 
 module.exports = {
   isBlobConfigured,
   uploadImageToBlob,
+  getBlobToken,
 };
