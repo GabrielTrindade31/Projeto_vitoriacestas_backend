@@ -32,6 +32,7 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 ## Endpoints
 - `POST /api/auth/login`: retorna token JWT para admin.
 - `GET /api/items`: lista itens (exige Authorization: Bearer <token> para Admin/Gestor/Operador).
+- `GET /api/items/images`: retorna o vínculo entre ID do item e a URL pública da imagem salva no Blob (mesmos perfis do endpoint de listagem de itens). Alias disponível em `/api/products/images`.
 - `POST /api/items`: cria item com validação de campos obrigatórios e código único (Admin/Gestor).
 - `GET /api/suppliers`: lista fornecedores (exige Authorization: Bearer <token> para Admin/Gestor/Operador).
 - `POST /api/suppliers`: cria fornecedor com validação de CNPJ, email e telefone (Admin).
@@ -39,6 +40,7 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 
 ## Banco de dados
 O arquivo `db/schema.sql` contém a modelagem baseada no diagrama fornecido, incluindo constraints de unicidade para código de produto e CNPJ de fornecedor.
+Há também a tabela `produto_imagem`, responsável por vincular o `produto_id` à URL pública armazenada no Blob; ela é preenchida/atualizada ao informar `imagemUrl` na criação ou edição de um item.
 
 ## Testes
 - Testes unitários cobrem validações de negócios para itens e fornecedores.
