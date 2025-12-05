@@ -492,7 +492,7 @@ paths:
       tags: [Itens]
       security:
         - bearerAuth: []
-      description: Recebe um arquivo de imagem (campo `file`) e retorna metadados básicos do upload. Caso o nome não possa ser extraído do corpo multipart, o cabeçalho opcional `x-filename` será utilizado. Alias disponível também em `/upload`.
+      description: Recebe um arquivo de imagem (campo `file`), salva em `public/uploads/`, publica no Vercel Blob quando a variável `BLOB_READ_WRITE_TOKEN` estiver configurada e grava uma cópia base64 no Redis com a chave `image:public:uploads/<arquivo>`. Caso o nome não possa ser extraído do corpo multipart, o cabeçalho opcional `x-filename` será utilizado. Alias disponível também em `/upload`.
       requestBody:
         required: true
         content:
@@ -505,7 +505,7 @@ paths:
                   format: binary
       responses:
         '201':
-          description: Upload recebido
+          description: Upload salvo e armazenado em cache
           content:
             application/json:
               schema:
@@ -513,7 +513,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Upload recebido
+                    example: Upload salvo com sucesso
                   filename:
                     type: string
                     nullable: true
@@ -521,6 +521,18 @@ paths:
                     type: string
                   size:
                     type: integer
+                  url:
+                    type: string
+                    example: https://exemplo.blob.vercel-storage.com/uploads/123-foto.png
+                  blobUrl:
+                    type: string
+                    nullable: true
+                  publicUrl:
+                    type: string
+                    example: /uploads/123-foto.png
+                  cacheKey:
+                    type: string
+                    example: image:public:uploads/123-foto.png
         '400':
           description: Nenhum arquivo foi enviado
   /upload:
