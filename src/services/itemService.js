@@ -39,7 +39,8 @@ function hasImagePayload(payload) {
   return (
     Object.prototype.hasOwnProperty.call(payload, 'imagemUrl') ||
     Object.prototype.hasOwnProperty.call(payload, 'imagem_url') ||
-    Object.prototype.hasOwnProperty.call(payload, 'imageUrl')
+    Object.prototype.hasOwnProperty.call(payload, 'imageUrl') ||
+    Object.prototype.hasOwnProperty.call(payload, 'imagem')
   );
 }
 
@@ -50,7 +51,9 @@ function createItemService(repository) {
     const normalized = {
       ...payload,
       fornecedorId: normalizeSupplierId(payload),
-      imagemUrl: normalizeImageUrl(payload.imagemUrl ?? payload.imagem_url ?? payload.imageUrl),
+      imagemUrl: normalizeImageUrl(
+        payload.imagemUrl ?? payload.imagem_url ?? payload.imageUrl ?? payload.imagem,
+      ),
     };
 
     const { error, value } = schema.validate(normalized, { abortEarly: false, allowUnknown: true });
