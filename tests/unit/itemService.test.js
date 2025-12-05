@@ -9,13 +9,13 @@ describe('createItemService', () => {
   };
 
   it('valida campos obrigatórios', async () => {
-    const repository = { findByCode: jest.fn(), create: jest.fn() };
+    const repository = { findByCode: jest.fn(), create: jest.fn(), findById: jest.fn() };
     const service = createItemService(repository);
     await expect(service.createItem({})).rejects.toThrow(/"codigo"/);
   });
 
   it('bloqueia quantidade negativa', async () => {
-    const repository = { findByCode: jest.fn(), create: jest.fn() };
+    const repository = { findByCode: jest.fn(), create: jest.fn(), findById: jest.fn() };
     const service = createItemService(repository);
     await expect(
       service.createItem({ ...basePayload, quantidade: -1 }),
@@ -26,6 +26,7 @@ describe('createItemService', () => {
     const repository = {
       findByCode: jest.fn().mockResolvedValue({ id: 1 }),
       create: jest.fn(),
+      findById: jest.fn(),
     };
     const service = createItemService(repository);
     await expect(service.createItem(basePayload)).rejects.toThrow('Código já cadastrado');
@@ -36,6 +37,8 @@ describe('createItemService', () => {
       findByCode: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockResolvedValue({ id: 1, ...basePayload }),
       findAll: jest.fn(),
+      findById: jest.fn().mockResolvedValue({ id: 1, ...basePayload }),
+      deleteImageByProductId: jest.fn(),
     };
     const service = createItemService(repository);
     const result = await service.createItem(basePayload);
@@ -55,5 +58,19 @@ describe('createItemService', () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe(99);
     expect(repository.findAll).toHaveBeenCalled();
+  });
+
+  it('lista vínculos de imagens quando solicitado', async () => {
+    const repository = {
+      findByCode: jest.fn(),
+      create: jest.fn(),
+      findAllImages: jest.fn().mockResolvedValue([{ produtoId: 1, imagemUrl: 'https://blob/1.png' }]),
+    };
+    const service = createItemService(repository);
+
+    const result = await service.listItemImages();
+
+    expect(result).toHaveLength(1);
+    expect(repository.findAllImages).toHaveBeenCalled();
   });
 });

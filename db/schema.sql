@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS telefones        CASCADE;
 DROP TABLE IF EXISTS manufatura       CASCADE;
 DROP TABLE IF EXISTS entrega_material CASCADE;
 DROP TABLE IF EXISTS materia_prima    CASCADE;
+DROP TABLE IF EXISTS produto_imagem   CASCADE;
 DROP TABLE IF EXISTS produto          CASCADE;
 DROP TABLE IF EXISTS fornecedor       CASCADE;
 DROP TABLE IF EXISTS cliente          CASCADE;
@@ -55,6 +56,16 @@ CREATE TABLE produto (
   -- O fornecedor é opcional: quando fornecido precisa existir, mas se o
   -- registro for removido, o produto fica sem fornecedor em vez de quebrar.
   fornecedor_id INTEGER REFERENCES fornecedor(id) ON DELETE SET NULL
+);
+
+-- Cada produto pode ter uma imagem pública armazenada no Blob, vinculada
+-- pelo ID do item. Mantemos a URL no banco para permitir que o frontend
+-- recupere o vínculo de forma rápida ao carregar a listagem.
+CREATE TABLE produto_imagem (
+  id SERIAL PRIMARY KEY,
+  produto_id INTEGER NOT NULL REFERENCES produto(id) ON DELETE CASCADE,
+  blob_url TEXT NOT NULL,
+  UNIQUE (produto_id)
 );
 
 CREATE TABLE materia_prima (
