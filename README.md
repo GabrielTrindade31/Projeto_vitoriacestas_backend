@@ -14,6 +14,7 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 - Todas as imagens servidas do diretório `public/` passam pela camada de cache Redis antes de serem lidas do disco.
 - A chave segue o padrão `image:public:<caminho-da-imagem>` (ex.: `image:public:logo.png`).
 - Cada entrada expira conforme `IMAGE_CACHE_TTL_SECONDS` (ou 30 minutos por padrão) para evitar dados desatualizados.
+- O Upstash é um banco chave-valor (não há tabelas a criar). Para depurar, use o painel do Upstash ou o console/CLI executando `redis.get("image:public:seu/arquivo.png")` e verificando se o valor base64 foi persistido com o content-type correspondente.
 
 ### Login e usuários padrão
 - O login já vem pré-carregado em memória (não depende do banco) com os perfis abaixo. Use-os no Swagger/`curl` ou sobrescreva via variáveis de ambiente (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `MANAGER_PASSWORD`, `OPERATOR_PASSWORD` etc.):
