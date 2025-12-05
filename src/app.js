@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const os = require('os');
 const path = require('path');
 const fs = require('fs/promises');
 const swaggerUi = require('swagger-ui-express');
@@ -43,6 +44,7 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const redis = getRedisClient();
   const blobUploadTimeoutMs = Number(process.env.BLOB_UPLOAD_TIMEOUT_MS || 30000);
   const cacheWriteTimeoutMs = Number(process.env.REDIS_CACHE_WRITE_TIMEOUT_MS || 5000);
+  const uploadDir = process.env.UPLOAD_DIR || path.join(os.tmpdir(), 'uploads');
 
   app.use(cors());
   app.use(express.json());
@@ -50,10 +52,11 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   app.use(
     createImageCacheMiddleware({
       redis,
-      basePath: path.join(__dirname, '..', 'public'),
+      basePaths: [path.join(__dirname, '..', 'public'), uploadDir],
     })
   );
   app.use(express.static(path.join(__dirname, '..', 'public')));
+  app.use('/uploads', express.static(uploadDir));
 
   ['/api/items', '/api/products', '/items', '/products'].forEach((path) => {
     app.use(path, resolvedItemRouter);
@@ -95,7 +98,6 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
       }
 
       const redis = getRedisClient();
-      const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
       await fs.mkdir(uploadDir, { recursive: true });
 
       const fallbackFilename = req.headers['x-filename'];

@@ -33,12 +33,13 @@ function toBuffer(value) {
   return null;
 }
 
-function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, basePath } = {}) {
+function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, basePaths = [], basePath } = {}) {
   if (!redis) {
     throw new Error('Redis client is required to cache images');
   }
 
   const rootFolder = basePath || path.join(__dirname, '..', '..', 'public');
+  const roots = basePaths.length > 0 ? basePaths : [rootFolder];
 
   return async function imageCacheMiddleware(req, res, next) {
     if (req.method !== 'GET') return next();
@@ -79,43 +80,47 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
       console.error('Erro ao tentar ler imagem do cache', error);
     }
 
-    try {
-      const absolutePath = path.join(rootFolder, relativePath);
-      const buffer = await fs.readFile(absolutePath);
-      const contentType = mime.lookup(absolutePath) || 'application/octet-stream';
-      const cachePayload = {
-        contentType,
-        data: buffer.toString('base64'),
-        publicUrl: `/${relativePath}`,
-      };
-
+    for (const root of roots) {
       try {
-        await redis.set(cacheKey, cachePayload, { ex: ttlSeconds });
-      } catch (error) {
-        console.error('Erro ao salvar imagem no cache', error);
-      }
+        const absolutePath = path.join(root, relativePath);
+        const buffer = await fs.readFile(absolutePath);
+        const contentType = mime.lookup(absolutePath) || 'application/octet-stream';
+        const cachePayload = {
+          contentType,
+          data: buffer.toString('base64'),
+          publicUrl: `/${relativePath}`,
+        };
 
-      res.set('Content-Type', contentType);
-      res.send(buffer);
+        try {
+          await redis.set(cacheKey, cachePayload, { ex: ttlSeconds });
+        } catch (error) {
+          console.error('Erro ao salvar imagem no cache', error);
+        }
 
-      if (isBlobConfigured()) {
-        (async () => {
-          try {
-            const blob = await uploadImageToBlob(relativePath, buffer, contentType);
-            if (blob?.url) {
-              const enrichedCache = { ...cachePayload, url: blob.url, downloadUrl: blob.downloadUrl };
-              await redis.set(cacheKey, enrichedCache, { ex: ttlSeconds });
+        res.set('Content-Type', contentType);
+        res.send(buffer);
+
+        if (isBlobConfigured()) {
+          (async () => {
+            try {
+              const blob = await uploadImageToBlob(relativePath, buffer, contentType);
+              if (blob?.url) {
+                const enrichedCache = { ...cachePayload, url: blob.url, downloadUrl: blob.downloadUrl };
+                await redis.set(cacheKey, enrichedCache, { ex: ttlSeconds });
+              }
+            } catch (error) {
+              console.error('Erro ao salvar imagem no Blob', error);
             }
-          } catch (error) {
-            console.error('Erro ao salvar imagem no Blob', error);
-          }
-        })();
-      }
+          })();
+        }
 
-      return undefined;
-    } catch (error) {
-      return next();
+        return undefined;
+      } catch (error) {
+        // Try next root
+      }
     }
+
+    return next();
   };
 }
 
