@@ -64,8 +64,8 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
         }
 
         // Redirect when the cached value is an absolute URL
-        if (isHttpUrl(hydrated?.url || hydrated)) {
-          return res.redirect(hydrated.url || hydrated);
+        if (isHttpUrl(hydrated?.downloadUrl || hydrated?.url || hydrated)) {
+          return res.redirect(hydrated.downloadUrl || hydrated.url || hydrated);
         }
 
         // Decode data URL values transparently

@@ -15,6 +15,13 @@ const { createImageCacheMiddleware, DEFAULT_TTL_SECONDS } = require('./middlewar
 const { getRedisClient } = require('./services/redisClient');
 const { uploadImageToBlob, isBlobConfigured } = require('./services/blobStorage');
 
+function withTimeout(promise, ms, onTimeoutValue = null) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(onTimeoutValue), ms)),
+  ]);
+}
+
 function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = {}) {
   const app = express();
   const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
@@ -78,10 +85,15 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
 
       const blobConfigured = isBlobConfigured();
       let blobUrl = null;
+      let blobDownloadUrl = null;
       if (blobConfigured) {
         try {
-          const blob = await uploadImageToBlob(relativePath, file.buffer, contentType);
+          const blob = await withTimeout(
+            uploadImageToBlob(relativePath, file.buffer, contentType),
+            5000
+          );
           blobUrl = blob?.url || null;
+          blobDownloadUrl = blob?.downloadUrl || null;
         } catch (error) {
           console.error('Erro ao salvar imagem no Blob', error);
         }
@@ -94,12 +106,13 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
 
       if (blobUrl) {
         cachePayload.url = blobUrl;
+        cachePayload.downloadUrl = blobDownloadUrl;
       }
 
       const cacheKey = `image:public:${relativePath}`;
 
       try {
-        await redis.set(cacheKey, cachePayload, { ex: DEFAULT_TTL_SECONDS });
+        await withTimeout(redis.set(cacheKey, cachePayload, { ex: DEFAULT_TTL_SECONDS }), 3000);
       } catch (error) {
         console.error('Erro ao salvar imagem no cache', error);
       }
@@ -113,6 +126,7 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
         size: file.size,
         url: blobUrl || publicUrl,
         blobUrl,
+        blobDownloadUrl,
         publicUrl,
         cacheKey,
         cacheTtlSeconds: DEFAULT_TTL_SECONDS,

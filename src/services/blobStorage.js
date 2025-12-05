@@ -1,7 +1,7 @@
 let putPromise;
 
 function isBlobConfigured() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return typeof process.env.BLOB_READ_WRITE_TOKEN === 'string' && process.env.BLOB_READ_WRITE_TOKEN.trim() !== '';
 }
 
 async function getPut() {
@@ -21,6 +21,7 @@ async function uploadImageToBlob(relativePath, buffer, contentType) {
   return put(objectKey, buffer, {
     access: 'public',
     contentType,
+    token: process.env.BLOB_READ_WRITE_TOKEN,
   });
 }
 
