@@ -10,6 +10,8 @@ const buildSupplierRouter = require('./routes/suppliers');
 const buildAuthRouter = require('./routes/auth');
 const buildCoreDataRouter = require('./routes/coreData');
 const { rateLimit } = require('./middlewares/authentication');
+const { createImageCacheMiddleware } = require('./middlewares/imageCache');
+const { getRedisClient } = require('./services/redisClient');
 
 function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = {}) {
   const app = express();
@@ -23,10 +25,17 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const resolvedSupplierRouter = supplierRouter || buildSupplierRouter();
   const resolvedAuthRouter = authRouter || buildAuthRouter();
   const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
+  const redis = getRedisClient();
 
   app.use(cors());
   app.use(express.json());
   app.use(rateLimit());
+  app.use(
+    createImageCacheMiddleware({
+      redis,
+      basePath: path.join(__dirname, '..', 'public'),
+    })
+  );
   app.use(express.static(path.join(__dirname, '..', 'public')));
 
   ['/api/items', '/api/products', '/items', '/products'].forEach((path) => {
