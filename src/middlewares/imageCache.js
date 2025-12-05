@@ -5,6 +5,33 @@ const mime = require('mime-types');
 const DEFAULT_TTL_SECONDS = Number(process.env.IMAGE_CACHE_TTL_SECONDS || 1800);
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp']);
 
+function isHttpUrl(candidate) {
+  return typeof candidate === 'string' && /^https?:\/\//i.test(candidate);
+}
+
+function isDataUrl(candidate) {
+  return typeof candidate === 'string' && /^data:/i.test(candidate);
+}
+
+function parseDataUrl(value) {
+  const [header, payload] = value.split(',', 2);
+  const mimeMatch = header.match(/^data:([^;]+);/i);
+
+  return {
+    contentType: mimeMatch ? mimeMatch[1] : 'application/octet-stream',
+    buffer: Buffer.from(payload || '', 'base64'),
+  };
+}
+
+function toBuffer(value) {
+  if (Buffer.isBuffer(value)) return value;
+  if (value && typeof value === 'object' && value.type === 'Buffer' && Array.isArray(value.data)) {
+    return Buffer.from(value.data);
+  }
+  if (typeof value === 'string') return Buffer.from(value, 'base64');
+  return null;
+}
+
 function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, basePath } = {}) {
   if (!redis) {
     throw new Error('Redis client is required to cache images');
@@ -24,11 +51,26 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
     try {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        const hydrated = typeof cached === 'string' ? { data: cached } : cached;
-        if (hydrated.data) {
-          const contentType = hydrated.contentType || mime.lookup(ext) || 'application/octet-stream';
+        const hydrated = typeof cached === 'string' ? cached : cached;
+
+        // Redirect when the cached value is an absolute URL
+        if (isHttpUrl(hydrated?.url || hydrated)) {
+          return res.redirect(hydrated.url || hydrated);
+        }
+
+        // Decode data URL values transparently
+        if (isDataUrl(hydrated?.url || hydrated)) {
+          const { contentType, buffer } = parseDataUrl(hydrated.url || hydrated);
           res.set('Content-Type', contentType);
-          return res.send(Buffer.from(hydrated.data, 'base64'));
+          return res.send(buffer);
+        }
+
+        const contentType = hydrated.contentType || mime.lookup(ext) || 'application/octet-stream';
+        const buffer = toBuffer(hydrated.data || hydrated.buffer || hydrated);
+
+        if (buffer) {
+          res.set('Content-Type', contentType);
+          return res.send(buffer);
         }
       }
     } catch (error) {
