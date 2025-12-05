@@ -236,6 +236,29 @@ paths:
           description: Permissão insuficiente
         '409':
           description: Código duplicado
+  /api/items/images:
+    get:
+      summary: Lista URLs de imagens vinculadas aos itens
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador. Retorna o vínculo entre ID do produto e a URL pública salva no Blob.
+      responses:
+        '200':
+          description: Relações imagem-produto retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  images:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItemImage'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
   /api/items/search:
     get:
       summary: Busca itens pelo termo informado
@@ -386,6 +409,29 @@ paths:
           description: Permissão insuficiente
         '409':
           description: Código duplicado
+  /api/products/images:
+    get:
+      summary: Lista URLs de imagens vinculadas aos produtos (alias de /api/items/images)
+      tags: [Itens]
+      security:
+        - bearerAuth: []
+      description: Disponível para Admin, Gestor e Operador.
+      responses:
+        '200':
+          description: Relações imagem-produto retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  images:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItemImage'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Permissão insuficiente
   /api/products/search:
     get:
       summary: Busca produtos pelo termo informado (alias de /api/items/search)
@@ -2579,6 +2625,10 @@ components:
         fornecedorId:
           type: integer
           nullable: true
+        imagemUrl:
+          type: string
+          format: uri
+          description: URL pública (ou relativa) da imagem vinculada ao produto
     ItemResponse:
       type: object
       properties:
@@ -2598,6 +2648,19 @@ components:
           properties:
             id:
               type: integer
+            imagemUrl:
+              type: string
+              format: uri
+    ItemImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        produtoId:
+          type: integer
+        imagemUrl:
+          type: string
+          format: uri
     EnderecoInput:
       type: object
       required: [rua, cep, numero]
