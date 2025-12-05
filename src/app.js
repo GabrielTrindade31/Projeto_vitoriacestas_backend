@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const os = require('os');
 const path = require('path');
 const fs = require('fs/promises');
 const swaggerUi = require('swagger-ui-express');
@@ -43,6 +44,7 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const redis = getRedisClient();
   const blobUploadTimeoutMs = Number(process.env.BLOB_UPLOAD_TIMEOUT_MS || 30000);
   const cacheWriteTimeoutMs = Number(process.env.REDIS_CACHE_WRITE_TIMEOUT_MS || 5000);
+  const uploadDir = process.env.UPLOAD_DIR || path.join(os.tmpdir(), 'uploads');
 
   app.use(cors());
   app.use(express.json());
@@ -50,10 +52,11 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   app.use(
     createImageCacheMiddleware({
       redis,
-      basePath: path.join(__dirname, '..', 'public'),
+      basePaths: [path.join(__dirname, '..', 'public'), uploadDir],
     })
   );
   app.use(express.static(path.join(__dirname, '..', 'public')));
+  app.use('/uploads', express.static(uploadDir));
 
   ['/api/items', '/api/products', '/items', '/products'].forEach((path) => {
     app.use(path, resolvedItemRouter);
@@ -68,11 +71,11 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
     app.use(path, resolvedCoreDataRouter);
   });
 
-  const withTimeout = (promise, timeoutMs, onTimeoutValue = null) => {
+  const withTimeout = (promise, timeoutMs, onTimeoutValue = null, label = 'operation') => {
     let timeoutHandle;
     const timer = new Promise((resolve, reject) => {
       timeoutHandle = setTimeout(() => {
-        const error = new Error('Operation timed out');
+        const error = new Error(`${label} timed out`);
         error.code = 'TIMEOUT';
         reject(error);
       }, timeoutMs);
@@ -95,7 +98,6 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
       }
 
       const redis = getRedisClient();
-      const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
       await fs.mkdir(uploadDir, { recursive: true });
 
       const fallbackFilename = req.headers['x-filename'];
@@ -111,29 +113,40 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
 
       const blobConfigured = isBlobConfigured();
       let blobUrl = null;
+      let blobDownloadUrl = null;
       let blobTimedOut = false;
+
       if (blobConfigured) {
         try {
           const blob = await withTimeout(
             uploadImageToBlob(relativePath, file.buffer, contentType),
-            Number(process.env.BLOB_UPLOAD_TIMEOUT_MS || 10000),
-            'timeout'
+            blobUploadTimeoutMs,
+            'timeout',
+            'blob upload'
           );
 
           if (blob === 'timeout') {
             blobTimedOut = true;
           } else {
             blobUrl = blob?.url || null;
+            blobDownloadUrl = blob?.downloadUrl || null;
           }
         } catch (error) {
           console.error('Erro ao salvar imagem no Blob', error);
         }
       }
 
+      const publicUrl = `/${relativePath}`;
       const cachePayload = {
         contentType,
         data: file.buffer.toString('base64'),
-        publicUrl: `/${relativePath}`,
+        publicUrl,
+        ...(blobUrl
+          ? {
+              url: blobUrl,
+              downloadUrl: blobDownloadUrl,
+            }
+          : {}),
       };
 
       const cacheKey = `image:public:${relativePath}`;
@@ -143,7 +156,8 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
         const cacheResult = await withTimeout(
           redis.set(cacheKey, cachePayload, { ex: DEFAULT_TTL_SECONDS }),
           Number(process.env.REDIS_CACHE_TIMEOUT_MS || 5000),
-          'timeout'
+          'timeout',
+          'redis cache'
         );
 
         if (cacheResult === 'timeout') {
@@ -151,34 +165,6 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
         }
       } catch (error) {
         console.error('Erro ao salvar imagem no cache', error);
-      }
-
-      const publicUrl = `/${relativePath}`;
-      const blobConfigured = isBlobConfigured();
-
-      if (blobConfigured) {
-        (async () => {
-          try {
-            const blob = await withTimeout(
-              uploadImageToBlob(relativePath, file.buffer, contentType),
-              blobUploadTimeoutMs,
-              null,
-              'blob upload'
-            );
-
-            if (blob?.url) {
-              const enrichedCache = {
-                ...cachePayload,
-                url: blob.url,
-                downloadUrl: blob.downloadUrl,
-              };
-
-              await redis.set(cacheKey, enrichedCache, { ex: DEFAULT_TTL_SECONDS });
-            }
-          } catch (error) {
-            console.error('Erro ao salvar imagem no Blob', error);
-          }
-        })();
       }
 
       return res.status(201).json({
@@ -193,6 +179,8 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
         blobConfigured,
         blobTimedOut,
         cacheTimedOut,
+        blobUrl,
+        blobDownloadUrl,
       });
     } catch (error) {
       console.error('Erro ao processar upload', error);
