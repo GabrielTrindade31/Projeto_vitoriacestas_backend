@@ -492,7 +492,7 @@ paths:
       tags: [Itens]
       security:
         - bearerAuth: []
-      description: Recebe um arquivo de imagem (campo `file`), salva em `public/uploads/`, publica no Vercel Blob quando a variável `BLOB_READ_WRITE_TOKEN` estiver configurada e grava uma cópia base64 no Redis com a chave `image:public:uploads/<arquivo>`. Caso o nome não possa ser extraído do corpo multipart, o cabeçalho opcional `x-filename` será utilizado. Alias disponível também em `/upload`.
+      description: Recebe um arquivo de imagem (campo `file`), salva em `public/uploads/`, publica no Vercel Blob quando a variável `BLOB_READ_WRITE_TOKEN` estiver configurada e grava uma cópia base64 no Redis com a chave `image:public:uploads/<arquivo>` (TTL configurável via `IMAGE_CACHE_TTL_SECONDS`, padrão 1800s). Caso o nome não possa ser extraído do corpo multipart, o cabeçalho opcional `x-filename` será utilizado. Alias disponível também em `/upload`.
       requestBody:
         required: true
         content:
@@ -533,15 +533,25 @@ paths:
                   cacheKey:
                     type: string
                     example: image:public:uploads/123-foto.png
+                  cacheTtlSeconds:
+                    type: integer
+                    example: 1800
+                    description: TTL configurado para a entrada de cache no Redis
+                  blobConfigured:
+                    type: boolean
+                    example: true
+                    description: Indica se o token BLOB_READ_WRITE_TOKEN estava definido no momento do upload
         '400':
           description: Nenhum arquivo foi enviado
+        '500':
+          description: Erro interno ao processar o upload (ex.: falha de escrita em disco ou exceção não tratada)
   /upload:
     post:
       summary: Upload de imagem opcional (alias)
       tags: [Itens]
       security:
         - bearerAuth: []
-      description: Alias direto de `/api/upload` para receber um arquivo (campo `file`) e retornar metadados do upload.
+      description: Alias direto de `/api/upload` para receber um arquivo (campo `file`) e retornar metadados do upload com a URL pública (Blob ou `/uploads/...`), chave de cache no Redis e TTL aplicado.
       requestBody:
         required: true
         content:

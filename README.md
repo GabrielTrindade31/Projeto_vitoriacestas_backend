@@ -16,7 +16,7 @@ API em Node.js/Express para gerenciamento de estoque, com cadastro de itens, for
 - A chave segue o padrão `image:public:<caminho-da-imagem>` (ex.: `image:public:logo.png`).
 - Cada entrada expira conforme `IMAGE_CACHE_TTL_SECONDS` (ou 30 minutos por padrão) para evitar dados desatualizados.
 - O Upstash é um banco chave-valor (não há tabelas a criar). Para depurar, use o painel do Upstash ou o console/CLI executando `redis.get("image:public:seu/arquivo.png")` e verificando se o valor base64 ou URL foi persistido com o content-type correspondente.
-- O endpoint `POST /api/upload` (alias `/upload`) agora recebe `multipart/form-data` com o campo `file`, salva o arquivo em `public/uploads/`, publica no Blob (quando configurado) e grava a entrada de cache `image:public:uploads/<arquivo>` contendo a URL pública e o base64. A resposta retorna tanto `url` (Blob ou `/uploads/...`) quanto a `cacheKey` usada no Redis.
+- O endpoint `POST /api/upload` (alias `/upload`) agora recebe `multipart/form-data` com o campo `file`, salva o arquivo em `public/uploads/`, publica no Blob (quando configurado) e grava a entrada de cache `image:public:uploads/<arquivo>` contendo a URL pública e o base64. A resposta retorna tanto `url` (Blob ou `/uploads/...`) quanto a `cacheKey` usada no Redis, além do `cacheTtlSeconds` aplicado e de um flag `blobConfigured` indicando se o token foi detectado.
 
 ### Login e usuários padrão
 - O login já vem pré-carregado em memória (não depende do banco) com os perfis abaixo. Use-os no Swagger/`curl` ou sobrescreva via variáveis de ambiente (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `MANAGER_PASSWORD`, `OPERATOR_PASSWORD` etc.):

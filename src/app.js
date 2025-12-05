@@ -15,6 +15,19 @@ const { createImageCacheMiddleware, DEFAULT_TTL_SECONDS } = require('./middlewar
 const { getRedisClient } = require('./services/redisClient');
 const { uploadImageToBlob, isBlobConfigured } = require('./services/blobStorage');
 
+function withTimeout(promise, ms, onTimeoutValue = null, label = 'operation') {
+  let timeoutId;
+
+  const timer = new Promise((resolve) => {
+    timeoutId = setTimeout(() => {
+      console.warn(`${label} timed out after ${ms}ms`);
+      resolve(onTimeoutValue);
+    }, ms);
+  });
+
+  return Promise.race([promise.finally(() => clearTimeout(timeoutId)), timer]);
+}
+
 function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = {}) {
   const app = express();
   const swaggerDocument = YAML.load(path.join(__dirname, '..', 'openapi.yaml'));
@@ -28,6 +41,8 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   const resolvedAuthRouter = authRouter || buildAuthRouter();
   const resolvedCoreDataRouter = coreDataRouter || buildCoreDataRouter();
   const redis = getRedisClient();
+  const blobUploadTimeoutMs = Number(process.env.BLOB_UPLOAD_TIMEOUT_MS || 30000);
+  const cacheWriteTimeoutMs = Number(process.env.REDIS_CACHE_WRITE_TIMEOUT_MS || 5000);
 
   app.use(cors());
   app.use(express.json());
@@ -53,67 +68,92 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
     app.use(path, resolvedCoreDataRouter);
   });
 
-  app.post(['/api/upload', '/upload'], uploadMemory.single('file'), async (req, res) => {
-    const file = req.file;
-
-    if (!file || !file.buffer || !file.originalname) {
-      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
-    }
-
-    const redis = getRedisClient();
-    const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    const fallbackFilename = req.headers['x-filename'];
-    const safeOriginal = (fallbackFilename || file.originalname || 'upload')
-      .replace(/[^\w.-]/g, '_')
-      .replace(/_+/g, '_');
-    const filename = `${Date.now()}-${safeOriginal}`;
-    const relativePath = path.posix.join('uploads', filename);
-    const absolutePath = path.join(uploadDir, filename);
-    const contentType = file.mimetype || 'application/octet-stream';
-
-    await fs.writeFile(absolutePath, file.buffer);
-
-    let blobUrl = null;
-    if (isBlobConfigured()) {
-      try {
-        const blob = await uploadImageToBlob(relativePath, file.buffer, contentType);
-        blobUrl = blob?.url || null;
-      } catch (error) {
-        console.error('Erro ao salvar imagem no Blob', error);
-      }
-    }
-
-    const cachePayload = {
-      contentType,
-      data: file.buffer.toString('base64'),
-    };
-
-    if (blobUrl) {
-      cachePayload.url = blobUrl;
-    }
-
-    const cacheKey = `image:public:${relativePath}`;
-
+  app.post(['/api/upload', '/upload'], uploadMemory.single('file'), async (req, res, next) => {
     try {
-      await redis.set(cacheKey, cachePayload, { ex: DEFAULT_TTL_SECONDS });
+      const file = req.file;
+
+      if (!file || !file.buffer || !file.originalname) {
+        return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+      }
+
+      const redis = getRedisClient();
+      const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      const fallbackFilename = req.headers['x-filename'];
+      const safeOriginal = (fallbackFilename || file.originalname || 'upload')
+        .replace(/[^\w.-]/g, '_')
+        .replace(/_+/g, '_');
+      const filename = `${Date.now()}-${safeOriginal}`;
+      const relativePath = path.posix.join('uploads', filename);
+      const absolutePath = path.join(uploadDir, filename);
+      const contentType = file.mimetype || 'application/octet-stream';
+
+      await fs.writeFile(absolutePath, file.buffer);
+
+      const cachePayload = {
+        contentType,
+        data: file.buffer.toString('base64'),
+        publicUrl: `/${relativePath}`,
+      };
+
+      const cacheKey = `image:public:${relativePath}`;
+
+      try {
+        await withTimeout(
+          redis.set(cacheKey, cachePayload, { ex: DEFAULT_TTL_SECONDS }),
+          cacheWriteTimeoutMs,
+          null,
+          'redis cache write'
+        );
+      } catch (error) {
+        console.error('Erro ao salvar imagem no cache', error);
+      }
+
+      const publicUrl = `/${relativePath}`;
+      const blobConfigured = isBlobConfigured();
+
+      if (blobConfigured) {
+        (async () => {
+          try {
+            const blob = await withTimeout(
+              uploadImageToBlob(relativePath, file.buffer, contentType),
+              blobUploadTimeoutMs,
+              null,
+              'blob upload'
+            );
+
+            if (blob?.url) {
+              const enrichedCache = {
+                ...cachePayload,
+                url: blob.url,
+                downloadUrl: blob.downloadUrl,
+              };
+
+              await redis.set(cacheKey, enrichedCache, { ex: DEFAULT_TTL_SECONDS });
+            }
+          } catch (error) {
+            console.error('Erro ao salvar imagem no Blob', error);
+          }
+        })();
+      }
+
+      return res.status(201).json({
+        message: 'Upload salvo com sucesso',
+        filename,
+        mimetype: contentType,
+        size: file.size,
+        url: publicUrl,
+        publicUrl,
+        cacheKey,
+        cacheTtlSeconds: DEFAULT_TTL_SECONDS,
+        blobConfigured,
+        blobUploadQueued: blobConfigured,
+      });
     } catch (error) {
-      console.error('Erro ao salvar imagem no cache', error);
+      console.error('Erro ao processar upload', error);
+      return next(error);
     }
-
-    const publicUrl = `/${relativePath}`;
-
-    return res.status(201).json({
-      message: 'Upload salvo com sucesso',
-      filename,
-      mimetype: contentType,
-      size: file.size,
-      url: blobUrl || publicUrl,
-      blobUrl,
-      publicUrl,
-      cacheKey,
-    });
   });
 
   app.get('/docs/swagger.json', (_, res) => {
@@ -130,6 +170,17 @@ function createApp({ itemRouter, supplierRouter, authRouter, coreDataRouter } = 
   );
 
   app.get('/health', (_, res) => res.json({ status: 'ok' }));
+
+  // Captura erros de upload (ex.: limites do Multer) e qualquer exceção não tratada,
+  // evitando que requisições fiquem penduradas no frontend.
+  app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ message: 'Erro ao processar upload', code: err.code });
+    }
+
+    console.error('Erro inesperado na aplicação', err);
+    return res.status(500).json({ message: 'Erro interno ao processar a requisição' });
+  });
 
   return app;
 }

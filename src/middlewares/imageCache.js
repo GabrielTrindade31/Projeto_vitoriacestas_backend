@@ -64,8 +64,8 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
         }
 
         // Redirect when the cached value is an absolute URL
-        if (isHttpUrl(hydrated?.url || hydrated)) {
-          return res.redirect(hydrated.url || hydrated);
+        if (isHttpUrl(hydrated?.downloadUrl || hydrated?.url || hydrated)) {
+          return res.redirect(hydrated.downloadUrl || hydrated.url || hydrated);
         }
 
         // Decode data URL values transparently
@@ -83,26 +83,11 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
       const absolutePath = path.join(rootFolder, relativePath);
       const buffer = await fs.readFile(absolutePath);
       const contentType = mime.lookup(absolutePath) || 'application/octet-stream';
-      let cachePayload;
-
-      if (isBlobConfigured()) {
-        try {
-          const blob = await uploadImageToBlob(relativePath, buffer, contentType);
-          if (blob?.url) {
-            cachePayload = { url: blob.url, contentType };
-          }
-        } catch (error) {
-          console.error('Erro ao salvar imagem no Blob', error);
-        }
-      }
-
-      if (!cachePayload) {
-        cachePayload = { contentType };
-      }
-
-      // Always keep a memory-friendly payload in Redis so the next request
-      // is served directly from cache even when Blob is enabled
-      cachePayload.data = buffer.toString('base64');
+      const cachePayload = {
+        contentType,
+        data: buffer.toString('base64'),
+        publicUrl: `/${relativePath}`,
+      };
 
       try {
         await redis.set(cacheKey, cachePayload, { ex: ttlSeconds });
@@ -111,7 +96,23 @@ function createImageCacheMiddleware({ redis, ttlSeconds = DEFAULT_TTL_SECONDS, b
       }
 
       res.set('Content-Type', contentType);
-      return res.send(buffer);
+      res.send(buffer);
+
+      if (isBlobConfigured()) {
+        (async () => {
+          try {
+            const blob = await uploadImageToBlob(relativePath, buffer, contentType);
+            if (blob?.url) {
+              const enrichedCache = { ...cachePayload, url: blob.url, downloadUrl: blob.downloadUrl };
+              await redis.set(cacheKey, enrichedCache, { ex: ttlSeconds });
+            }
+          } catch (error) {
+            console.error('Erro ao salvar imagem no Blob', error);
+          }
+        })();
+      }
+
+      return undefined;
     } catch (error) {
       return next();
     }
